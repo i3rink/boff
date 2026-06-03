@@ -163,6 +163,20 @@
   .tag-suggest .s:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
   .tagfilter { display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: var(--paper); border-radius: 20px; padding: 6px 9px 6px 13px; font-size: 12.5px; }
   .tagfilter button { border: none; background: transparent; color: var(--paper); cursor: pointer; font-size: 15px; line-height: 1; }
+  .att-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .att-list:empty { display: none; }
+  .att-row { display: flex; align-items: center; gap: 8px; background: var(--paper-2); border-radius: 8px; padding: 6px 8px 6px 12px; }
+  .att-name { flex: 1; text-align: left; border: none; background: transparent; cursor: pointer; color: var(--accent); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .att-name:hover { text-decoration: underline; }
+  .att-size { font-size: 11px; color: var(--ink-faint); white-space: nowrap; }
+  .att-rm { border: none; background: transparent; cursor: pointer; color: var(--ink-soft); font-size: 17px; line-height: 1; padding: 0 4px; }
+  .att-add { width: auto; align-self: flex-start; }
+  .att-hint { font-size: 11px; color: var(--ink-faint); margin-top: 6px; }
+  .att-detail { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .att-chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line-strong); background: transparent; color: var(--ink-soft); border-radius: 20px; padding: 4px 11px 4px 9px; font-size: 12px; cursor: pointer; }
+  .att-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .att-chip .att-ic svg, .att-count svg { width: 13px; height: 13px; display: block; }
+  .att-count { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; color: var(--ink-faint); }
   .meta-txt.over { color: var(--accent); font-weight: 600; }
   .caller-tag { font-size: 11.5px; color: var(--ink-soft); }
   .entry-actions { display: flex; gap: 4px; flex: none; }
@@ -354,7 +368,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="#2b2722" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input id="searchInput" placeholder="Search titles and details" autocomplete="off">
       </div>
-      <select id="sortSel"><option value="priority">Sort by priority</option><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="due">By due date</option><option value="category">By category</option></select>
+      <select id="sortSel"><option value="priority">Sort by priority</option><option value="tag">By tag</option><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="due">By due date</option><option value="category">By category</option></select>
       <select id="periodSel" style="display:none"><option value="all">All time</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="thismonth">This month</option><option value="lastmonth">Last month</option><option value="thisyear">This year</option></select>
       <span id="tagFilterWrap"></span>
     </div>
@@ -392,6 +406,13 @@
         <div id="mTagChips" class="tag-chips"></div>
         <input id="mTagInput" placeholder="Type a tag and press Enter, e.g. sales">
         <div id="mTagSuggest" class="tag-suggest"></div>
+      </div>
+      <div class="field">
+        <label>Attachments</label>
+        <div id="mAttList" class="att-list"></div>
+        <input type="file" id="mAttInput" style="display:none">
+        <button type="button" class="btn att-add" id="mAttAdd">Attach a file</button>
+        <div class="att-hint">Up to 50 MB each. You need to be online to upload or open them.</div>
       </div>
     </div>
     <div class="modal-foot">
@@ -518,15 +539,15 @@
 
   /* ---------- CRUD ---------- */
   function addEntry(title, cat, pri, type) {
-    var e = { id: uid(), title: title.trim(), details: "", category: cat, priority: pri, type: type, caller: "", due: "", done: false, tags: [], created: Date.now(), updated: Date.now() };
+    var e = { id: uid(), title: title.trim(), details: "", category: cat, priority: pri, type: type, caller: "", due: "", done: false, tags: [], attachments: [], created: Date.now(), updated: Date.now() };
     state.entries.push(e); dirtyEntry(e.id); persist(); return e;
   }
   function getEntry(id) { for (var i = 0; i < state.entries.length; i++) if (state.entries[i].id === id) return state.entries[i]; return null; }
   function delEntry(id) { state.entries = state.entries.filter(function (e) { return e.id !== id; }); dirtyDelete(id); persist(); }
 
   /* ---------- cloud sync ---------- */
-  function entryRow(e) { return { user_id: user.id, id: e.id, title: e.title, details: e.details, category: e.category, priority: e.priority, type: e.type, caller: e.caller, due: e.due || null, done: e.done, tags: (e.tags && e.tags.length) ? e.tags.join(",") : null, created: e.created, updated: e.updated }; }
-  function cleanRow(r) { return { id: r.id, title: r.title, details: r.details || "", category: r.category, priority: r.priority, type: r.type, caller: r.caller || "", due: r.due || "", done: !!r.done, tags: (r.tags ? String(r.tags).split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []), created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
+  function entryRow(e) { return { user_id: user.id, id: e.id, title: e.title, details: e.details, category: e.category, priority: e.priority, type: e.type, caller: e.caller, due: e.due || null, done: e.done, tags: (e.tags && e.tags.length) ? e.tags.join(",") : null, attachments: (e.attachments && e.attachments.length) ? JSON.stringify(e.attachments) : null, created: e.created, updated: e.updated }; }
+  function cleanRow(r) { var atts = []; if (r.attachments) { try { atts = JSON.parse(r.attachments) || []; } catch (x) { atts = []; } } return { id: r.id, title: r.title, details: r.details || "", category: r.category, priority: r.priority, type: r.type, caller: r.caller || "", due: r.due || "", done: !!r.done, tags: (r.tags ? String(r.tags).split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []), attachments: atts, created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
 
   function flush() {
     if (!sb || !user) return Promise.resolve();
@@ -598,6 +619,7 @@
   function sortEntries(arr) {
     if (view === "done") { arr.sort(function (a, b) { return sort === "oldest" ? a.updated - b.updated : b.updated - a.updated; }); return arr; }
     var s = (view === "todo" || view === "today") ? "priority" : sort;
+    if (sort === "tag") s = "priority";
     arr.sort(function (a, b) {
       if (s === "priority") {
         if (a.done !== b.done) return a.done ? 1 : -1;
@@ -703,6 +725,51 @@
     x.addEventListener("click", clearTagFilter); chip.appendChild(x); wrap.appendChild(chip);
   }
 
+  /* ---------- attachments ---------- */
+  var CLIP_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
+  function fmtSize(b) { b = Number(b) || 0; if (b < 1024) return b + " B"; if (b < 1048576) return Math.round(b / 1024) + " KB"; return (b / 1048576).toFixed(1) + " MB"; }
+  function renderModalAtts() {
+    var box = document.getElementById("mAttList"); box.innerHTML = "";
+    var e = getEntry(editingId); if (!e) return;
+    (e.attachments || []).forEach(function (a, i) {
+      var row = el("div", "att-row");
+      var nm = el("button", "att-name", a.name); nm.type = "button"; nm.title = "Open";
+      nm.addEventListener("click", function () { openAttachment(a); });
+      var sz = el("span", "att-size", fmtSize(a.size));
+      var rm = el("button", "att-rm", "\u00d7"); rm.type = "button"; rm.title = "Remove";
+      rm.addEventListener("click", function () { removeAttachment(i); });
+      row.appendChild(nm); row.appendChild(sz); row.appendChild(rm); box.appendChild(row);
+    });
+  }
+  function onAttPicked(ev) { var f = ev.target.files && ev.target.files[0]; ev.target.value = ""; if (f) uploadAttachment(f); }
+  function uploadAttachment(file) {
+    var e = getEntry(editingId); if (!e) return;
+    if (!sb || !user) { toast("Sign in and go online to attach files"); return; }
+    if (file.size > 50 * 1048576) { toast("That file is over 50 MB, too big for the free plan"); return; }
+    toast("Uploading " + file.name);
+    var safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    var path = user.id + "/" + e.id + "/" + Date.now() + "-" + safe;
+    sb.storage.from("attachments").upload(path, file, { upsert: false }).then(function (r) {
+      if (r.error) { toast("Upload failed, are you online?"); return; }
+      if (!e.attachments) e.attachments = [];
+      e.attachments.push({ name: file.name, path: path, size: file.size, type: file.type || "" });
+      e.updated = Date.now(); dirtyEntry(e.id); persist(); renderModalAtts(); render(); toast("Attached");
+    }, function () { toast("Upload failed, are you online?"); });
+  }
+  function removeAttachment(i) {
+    var e = getEntry(editingId); if (!e || !e.attachments || !e.attachments[i]) return;
+    var a = e.attachments[i];
+    if (sb && user) sb.storage.from("attachments").remove([a.path]);
+    e.attachments.splice(i, 1); e.updated = Date.now(); dirtyEntry(e.id); persist(); renderModalAtts(); render();
+  }
+  function openAttachment(a) {
+    if (!sb || !user) { toast("Go online to open attachments"); return; }
+    sb.storage.from("attachments").createSignedUrl(a.path, 120).then(function (r) {
+      if (r.error || !r.data) { toast("Couldn't open that file"); return; }
+      window.open(r.data.signedUrl, "_blank");
+    }, function () { toast("Couldn't open that file"); });
+  }
+
   /* ---------- render ---------- */
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
 
@@ -764,6 +831,19 @@
       });
       return;
     }
+    if (sort === "tag") {
+      allTags().forEach(function (tg) {
+        var grp = entries.filter(function (e) { return (e.tags || []).indexOf(tg) > -1; }); if (!grp.length) return;
+        var g = el("div", "group-label"); g.appendChild(el("span", null, tg)); g.appendChild(el("span", "ln")); list.appendChild(g);
+        grp.forEach(function (e) { list.appendChild(entryNode(e)); });
+      });
+      var untagged = entries.filter(function (e) { return !(e.tags && e.tags.length); });
+      if (untagged.length) {
+        var gu = el("div", "group-label"); gu.appendChild(el("span", null, "No tag")); gu.appendChild(el("span", "ln")); list.appendChild(gu);
+        untagged.forEach(function (e) { list.appendChild(entryNode(e)); });
+      }
+      return;
+    }
     if (view === "todo" && sort === "priority") {
       ["high", "medium", "low"].forEach(function (p) {
         var grp = entries.filter(function (e) { return e.priority === p; }); if (!grp.length) return;
@@ -790,6 +870,7 @@
     if (e.done) meta.appendChild(el("span", "meta-txt", "Completed " + fmtDateShort(e.updated)));
     else meta.appendChild(el("span", "meta-txt", "Added " + fmtDateShort(e.created)));
     (e.tags || []).forEach(function (tg) { var tc = el("span", "tag-chip", tg); tc.addEventListener("click", function (ev) { ev.stopPropagation(); setTagFilter(tg); }); meta.appendChild(tc); });
+    if (e.attachments && e.attachments.length) { var clip = el("span", "att-count"); clip.innerHTML = CLIP_SVG; clip.appendChild(document.createTextNode(" " + e.attachments.length)); meta.appendChild(clip); }
     body.appendChild(meta);
     body.addEventListener("click", function () { openIds[e.id] = !openIds[e.id]; render(); });
     row.appendChild(body);
@@ -810,6 +891,16 @@
       cal.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Add to calendar';
       cal.addEventListener("click", function (ev) { ev.stopPropagation(); addToCalendar(e); });
       detail.appendChild(cal);
+    }
+    if (e.attachments && e.attachments.length) {
+      var aw = el("div", "att-detail");
+      e.attachments.forEach(function (a) {
+        var ab = el("button", "att-chip"); ab.type = "button";
+        var ic = el("span", "att-ic"); ic.innerHTML = CLIP_SVG; ab.appendChild(ic); ab.appendChild(document.createTextNode(a.name));
+        ab.addEventListener("click", function (ev) { ev.stopPropagation(); openAttachment(a); });
+        aw.appendChild(ab);
+      });
+      detail.appendChild(aw);
     }
     detail.appendChild(el("div", "det-foot", "Added " + new Date(e.created).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })));
     wrap.appendChild(detail);
@@ -862,6 +953,7 @@
     document.getElementById("mCaller").value = e.caller || "";
     modalTags = (e.tags || []).slice();
     renderModalTags();
+    renderModalAtts();
     toggleCaller(e.type);
     document.getElementById("scrim").classList.add("show");
     document.getElementById("mTitle").focus();
@@ -1178,6 +1270,8 @@
     document.querySelectorAll(".md-bar button").forEach(function (b) { b.addEventListener("click", function () { mdAction(b.dataset.md); }); });
     document.getElementById("mTagInput").addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === ",") { ev.preventDefault(); addModalTagFromInput(); } });
     document.getElementById("mTagInput").addEventListener("blur", addModalTagFromInput);
+    document.getElementById("mAttAdd").addEventListener("click", function () { document.getElementById("mAttInput").click(); });
+    document.getElementById("mAttInput").addEventListener("change", onAttPicked);
     document.getElementById("scrim").addEventListener("click", function (ev) { if (ev.target.id === "scrim") closeModal(); });
     document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeModal(); });
     document.getElementById("dayNote").addEventListener("input", function (ev) { state.notes[todayKey()] = ev.target.value; dirtyNote(todayKey()); persist(); });
