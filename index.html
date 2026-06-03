@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOFF</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d9488">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BOFF">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f4f4f3; --paper-2: #ededeb; --card: #ffffff;
+    --ink: #18181b; --ink-soft: #56565e; --ink-faint: #a1a1aa;
+    --line: #e8e8e5; --line-strong: #d8d8d4;
+    --accent: #0d9488; --accent-soft: #cdeeea;
+    --shadow: 0 1px 2px rgba(24,24,27,.05), 0 8px 24px rgba(24,24,27,.05);
+    --shadow-lift: 0 4px 10px rgba(24,24,27,.08), 0 18px 44px rgba(24,24,27,.10);
+    --cat-annick: #e0992b; --cat-atf: #3b82f6; --cat-pnw: #22a06b;
+    --cat-pw: #d6457a; --cat-ideas: #f0683c; --cat-kb: #7c6cf0;
+    --p-high: #ef4444; --p-med: #e0992b; --p-low: #22a06b;
+    --ok: #22a06b; --warn: #e0992b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Hanken Grotesk", -apple-system, system-ui, sans-serif;
+    background: var(--paper); color: var(--ink);
+    -webkit-font-smoothing: antialiased; line-height: 1.45;
+    background-image: radial-gradient(rgba(43,39,34,.025) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  ::selection { background: var(--accent-soft); }
+  .app { display: grid; grid-template-columns: 270px 1fr; min-height: 100vh; }
+
+  .side { background: var(--paper-2); border-right: 1px solid var(--line); padding: 26px 18px 30px; display: flex; flex-direction: column; gap: 6px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .brand { display: flex; align-items: baseline; gap: 8px; padding: 0 8px 4px; }
+  .brand h1 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 600; font-size: 30px; letter-spacing: -.5px; line-height: 1; }
+  .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); margin-bottom: 4px; }
+  .brand small { display:block; color: var(--ink-faint); font-size: 11px; letter-spacing:.14em; text-transform: uppercase; padding: 6px 8px 14px; }
+  .nav-label { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-faint); padding: 16px 10px 6px; }
+  .nav-btn { display: flex; align-items: center; gap: 10px; width: 100%; border: none; background: transparent; cursor: pointer; font: inherit; font-size: 14.5px; color: var(--ink-soft); padding: 9px 10px; border-radius: 9px; text-align: left; transition: background .15s, color .15s; }
+  .nav-btn:hover { background: rgba(43,39,34,.05); color: var(--ink); }
+  .nav-btn.active { background: var(--ink); color: var(--paper); }
+  .nav-btn .swatch { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .nav-btn .count { margin-left: auto; font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .nav-btn.active .count { color: rgba(246,241,231,.65); }
+  .nav-btn .ico { width: 16px; height: 16px; flex: none; opacity:.8; }
+  .side-foot { margin-top: auto; padding-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .sync-pill { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-soft); padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint); flex: none; }
+  .sync-dot.ok { background: var(--ok); } .sync-dot.warn { background: var(--warn); } .sync-dot.busy { background: var(--accent); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .acct { font-size: 11.5px; color: var(--ink-faint); padding: 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stat-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .stat-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-soft); padding: 3px 0; }
+  .stat-row b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .io-row { display: flex; gap: 8px; }
+  .io-btn { flex: 1; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); border-radius: 9px; padding: 8px; font: inherit; font-size: 12.5px; cursor: pointer; transition: .15s; }
+  .io-btn:hover { background: var(--paper); border-color: var(--ink-soft); }
+
+  .main { padding: 30px 38px 80px; max-width: 980px; }
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 22px; flex-wrap: wrap; }
+  .head .title h2 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 600; font-size: 34px; letter-spacing: -.6px; line-height: 1.05; }
+  .head .title p { color: var(--ink-soft); font-size: 14px; margin-top: 4px; }
+  .today-date { font-family: "Bricolage Grotesque", sans-serif; font-size: 15px; color: var(--ink-soft); text-align: right; }
+  .today-date b { display: block; font-size: 22px; color: var(--ink); font-weight: 600; }
+
+  .quick { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 14px; margin-bottom: 22px; }
+  .quick-top { display: flex; gap: 10px; align-items: center; }
+  .quick input.title { flex: 1; border: none; background: transparent; font: inherit; font-size: 16px; color: var(--ink); padding: 6px 4px; }
+  .quick input.title::placeholder { color: var(--ink-faint); }
+  .quick input.title:focus { outline: none; }
+  .add-btn { border: none; background: var(--accent); color: #fff; border-radius: 10px; padding: 10px 18px; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; transition: .15s; flex: none; }
+  .add-btn:hover { background: #0b7d73; }
+  .quick-opts { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  select { border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  select:focus { outline: none; border-color: var(--ink-soft); }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .search { flex: 1; min-width: 180px; position: relative; }
+  .search input { width: 100%; border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 10px 12px 10px 34px; font: inherit; font-size: 14px; color: var(--ink); }
+  .search input:focus { outline: none; border-color: var(--ink-soft); }
+  .search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; opacity: .4; }
+
+  .note-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 18px; margin-bottom: 24px; }
+  .note-card h3 { font-family: "Bricolage Grotesque", sans-serif; font-size: 17px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .note-card textarea { width: 100%; border: none; background: transparent; resize: vertical; min-height: 64px; font: inherit; font-size: 14.5px; color: var(--ink); line-height: 1.6; }
+  .note-card textarea:focus { outline: none; }
+  .note-card textarea::placeholder { color: var(--ink-faint); }
+
+  .mic { border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink-soft); border-radius: 10px; width: 42px; height: 42px; display: grid; place-items: center; cursor: pointer; flex: none; transition: .15s; }
+  .mic:hover { border-color: var(--accent); color: var(--accent); }
+  .mic svg { width: 18px; height: 18px; }
+  .mic.active { background: var(--accent); border-color: var(--accent); color: #fff; animation: micpulse 1.1s infinite; }
+  @keyframes micpulse { 50% { box-shadow: 0 0 0 6px var(--accent-soft); } }
+  .mic.sm { width: 30px; height: 30px; border-radius: 8px; }
+  .mic.sm svg { width: 15px; height: 15px; }
+  .lbl-row { display: flex; align-items: center; justify-content: space-between; }
+  .quick-hint { font-size: 12px; color: var(--ink-faint); margin-top: 10px; line-height: 1.5; }
+  .quick-hint b { color: var(--ink-soft); font-weight: 600; }
+
+  .briefing { background: var(--ink); color: var(--paper); border-radius: 14px; padding: 18px 20px; margin-bottom: 18px; box-shadow: var(--shadow); }
+  .briefing h3 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 600; font-size: 19px; margin-bottom: 4px; }
+  .briefing p { font-size: 13.5px; color: rgba(246,246,243,.72); }
+  .briefing .nums { display: flex; gap: 22px; margin: 14px 0 4px; }
+  .briefing .num b { font-family: "Bricolage Grotesque", sans-serif; font-size: 26px; font-weight: 700; display: block; line-height: 1; }
+  .briefing .num span { font-size: 11.5px; color: rgba(246,246,243,.62); letter-spacing: .04em; }
+  .briefing .num.warn b { color: #ffb4a0; }
+  .briefing .carry { margin-top: 14px; border: 1px solid rgba(246,246,243,.25); background: transparent; color: var(--paper); border-radius: 9px; padding: 9px 14px; font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; transition: .15s; }
+  .briefing .carry:hover { background: rgba(246,246,243,.12); }
+
+  .cal-btn { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink-soft); border-radius: 8px; padding: 6px 11px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: .15s; }
+  .cal-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .cal-btn svg { width: 13px; height: 13px; }
+
+  .group-label { font-family: "Bricolage Grotesque", sans-serif; font-size: 14px; color: var(--ink-soft); margin: 22px 2px 10px; letter-spacing: .2px; display: flex; align-items: center; gap: 8px; }
+  .group-label .ln { flex: 1; height: 1px; background: var(--line); }
+
+  .entry { background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 10px; overflow: hidden; position: relative; transition: box-shadow .18s; }
+  .entry:hover { box-shadow: var(--shadow-lift); }
+  .entry::before { content:""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--line-strong); }
+  .entry.p-high::before { background: var(--p-high); } .entry.p-medium::before { background: var(--p-med); } .entry.p-low::before { background: var(--p-low); }
+  .entry.done { opacity: .58; }
+  .entry-row { display: flex; align-items: flex-start; gap: 12px; padding: 13px 15px 13px 17px; }
+  .check { width: 20px; height: 20px; border: 2px solid var(--line-strong); border-radius: 6px; cursor: pointer; flex: none; margin-top: 1px; display: grid; place-items: center; transition: .15s; background: var(--paper); }
+  .check:hover { border-color: var(--accent); }
+  .check.on { background: var(--accent); border-color: var(--accent); }
+  .check.on svg { stroke: #fff; }
+  .check svg { width: 12px; height: 12px; stroke: transparent; stroke-width: 3; fill: none; }
+  .entry-body { flex: 1; min-width: 0; cursor: pointer; }
+  .entry-title { font-size: 15.5px; font-weight: 600; color: var(--ink); word-break: break-word; }
+  .entry.done .entry-title { text-decoration: line-through; text-decoration-color: var(--ink-faint); }
+  .entry-meta { display: flex; gap: 7px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+  .badge { font-size: 11px; font-weight: 600; padding: 2.5px 8px; border-radius: 20px; letter-spacing: .02em; }
+  .cat-badge { color: #fff; }
+  .pri-badge { background: transparent; border: 1px solid; }
+  .pri-high { color: var(--p-high); border-color: var(--p-high); } .pri-medium { color: var(--p-med); border-color: var(--p-med); } .pri-low { color: var(--p-low); border-color: var(--p-low); }
+  .meta-txt { font-size: 11.5px; color: var(--ink-faint); }
+  .meta-txt.over { color: var(--accent); font-weight: 600; }
+  .caller-tag { font-size: 11.5px; color: var(--ink-soft); }
+  .entry-actions { display: flex; gap: 4px; flex: none; }
+  .icobtn { border: none; background: transparent; cursor: pointer; padding: 6px; border-radius: 7px; color: var(--ink-faint); transition: .15s; }
+  .icobtn:hover { background: rgba(43,39,34,.06); color: var(--ink); }
+  .icobtn svg { width: 16px; height: 16px; display: block; }
+  .chev { transition: transform .2s; }
+  .entry.open .chev { transform: rotate(90deg); }
+  .entry-detail { display: none; padding: 0 17px 15px 49px; }
+  .entry.open .entry-detail { display: block; }
+  .entry-detail .det-text { font-size: 14px; color: var(--ink-soft); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .entry-detail .det-empty { font-style: italic; color: var(--ink-faint); font-size: 13px; }
+  .entry-detail .det-foot { margin-top: 10px; font-size: 11px; color: var(--ink-faint); }
+  .empty { text-align: center; padding: 60px 20px; color: var(--ink-faint); }
+  .empty svg { width: 40px; height: 40px; opacity: .3; margin-bottom: 12px; }
+  .empty p { font-size: 14px; }
+
+  .scrim { position: fixed; inset: 0; background: rgba(43,39,34,.42); backdrop-filter: blur(2px); display: none; place-items: center; z-index: 50; padding: 20px; }
+  .scrim.show { display: grid; }
+  .modal { background: var(--card); border-radius: 16px; width: 100%; max-width: 520px; box-shadow: var(--shadow-lift); max-height: 90vh; overflow-y: auto; }
+  .modal-head { padding: 20px 22px 6px; }
+  .modal-head h3 { font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; font-weight: 600; }
+  .modal-body { padding: 14px 22px 8px; display: flex; flex-direction: column; gap: 14px; }
+  .field label { display: block; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
+  .field input, .field textarea, .field select { width: 100%; border: 1px solid var(--line-strong); background: var(--paper); border-radius: 9px; padding: 10px 12px; font: inherit; font-size: 14.5px; color: var(--ink); }
+  .field textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+  .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--accent); }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-foot { padding: 8px 22px 22px; display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
+  .modal-foot .del { margin-right: auto; }
+  .btn { border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); border-radius: 9px; padding: 10px 18px; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; transition: .15s; }
+  .btn:hover { border-color: var(--ink-soft); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #0b7d73; }
+  .btn.danger { color: var(--accent); border-color: transparent; }
+  .btn.danger:hover { background: rgba(182,73,42,.08); }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--paper); padding: 12px 20px; border-radius: 10px; font-size: 14px; box-shadow: var(--shadow-lift); opacity: 0; pointer-events: none; transition: .25s; z-index: 60; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .menu-toggle { display: none; }
+
+  /* Auth */
+  .auth { position: fixed; inset: 0; background: var(--paper); display: none; place-items: center; z-index: 70; padding: 24px; background-image: radial-gradient(rgba(43,39,34,.03) 1px, transparent 1px); background-size: 22px 22px; }
+  .auth.show { display: grid; }
+  .auth-card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-lift); padding: 34px 30px; width: 100%; max-width: 380px; }
+  .auth-brand { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .auth-brand h1 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 600; font-size: 32px; letter-spacing: -.5px; }
+  .auth-brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); margin-bottom: 5px; }
+  .auth-card p.lead { color: var(--ink-soft); font-size: 13.5px; margin-bottom: 22px; }
+  .auth-card label { display: block; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); margin: 14px 0 6px; }
+  .auth-card input { width: 100%; border: 1px solid var(--line-strong); background: var(--paper); border-radius: 10px; padding: 11px 13px; font: inherit; font-size: 15px; color: var(--ink); }
+  .auth-card input:focus { outline: none; border-color: var(--accent); }
+  .auth-actions { display: flex; gap: 10px; margin-top: 22px; }
+  .auth-actions .btn { flex: 1; }
+  .auth-err { color: var(--accent); font-size: 13px; margin-top: 14px; min-height: 18px; }
+  .auth-foot { margin-top: 18px; font-size: 12px; color: var(--ink-faint); line-height: 1.5; }
+  .auth-card label.remember { text-transform: none; letter-spacing: normal; font-size: 13.5px; color: var(--ink-soft); display: flex; align-items: center; gap: 9px; margin: 20px 0 0; cursor: pointer; }
+  .auth-card label.remember input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; }
+    .side { position: fixed; left: 0; top: 0; width: 270px; z-index: 40; transform: translateX(-100%); transition: transform .25s; box-shadow: var(--shadow-lift); }
+    .side.open { transform: translateX(0); }
+    .main { padding: 18px 18px 80px; }
+    .menu-toggle { display: inline-grid; place-items: center; position: fixed; top: 14px; right: 14px; z-index: 45; width: 42px; height: 42px; border-radius: 11px; border: 1px solid var(--line); background: var(--card); cursor: pointer; box-shadow: var(--shadow); }
+    .head .title h2 { font-size: 27px; }
+    .field-grid { grid-template-columns: 1fr; }
+  }
+  @media print {
+    .side, .quick, .toolbar, .menu-toggle, .entry-actions, .check, .note-card textarea { display: none !important; }
+    .app { grid-template-columns: 1fr; }
+    body { background: #fff; }
+    .entry { break-inside: avoid; box-shadow: none; border-color: #ccc; }
+    .entry-detail { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Auth screen -->
+<div class="auth" id="auth">
+  <div class="auth-card">
+    <div class="auth-brand"><h1>BOFF</h1><span class="dot"></span></div>
+    <p class="lead">Sign in to reach your notes on any device. They stay private to you.</p>
+    <label>Email</label>
+    <input id="authEmail" type="email" autocomplete="username" placeholder="you@email.com">
+    <label>Password</label>
+    <input id="authPass" type="password" autocomplete="current-password" placeholder="Your password">
+    <label class="remember"><input type="checkbox" id="rememberMe" checked> Keep me signed in on this device</label>
+    <div class="auth-actions">
+      <button class="btn primary" id="signInBtn">Sign in</button>
+      <button class="btn" id="signUpBtn">Create account</button>
+    </div>
+    <div class="auth-err" id="authErr"></div>
+    <div class="auth-foot" id="authFoot"></div>
+  </div>
+</div>
+
+<button class="menu-toggle" id="menuToggle" aria-label="Menu">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2b2722" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand"><h1>BOFF</h1><span class="dot"></span></div>
+    <small>the boffin's day book</small>
+
+    <div class="nav-label">Views</div>
+    <button class="nav-btn" data-view="todo"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Priority to-do <span class="count" id="c-todo"></span></button>
+    <button class="nav-btn" data-view="today"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Today <span class="count" id="c-today"></span></button>
+    <button class="nav-btn" data-view="all"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>All entries <span class="count" id="c-all"></span></button>
+    <button class="nav-btn" data-view="calls"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call log <span class="count" id="c-calls"></span></button>
+    <button class="nav-btn" data-view="done"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Completed <span class="count" id="c-done"></span></button>
+
+    <div class="nav-label">Categories</div>
+    <div id="catNav"></div>
+
+    <div class="side-foot">
+      <div class="sync-pill"><span class="sync-dot" id="syncDot"></span><span id="syncTxt">Starting up</span></div>
+      <div class="acct" id="acctTxt"></div>
+      <div class="stat-card">
+        <div class="stat-row"><span>Open</span><b id="s-open">0</b></div>
+        <div class="stat-row"><span>Done</span><b id="s-done">0</b></div>
+        <div class="stat-row"><span>High priority</span><b id="s-high">0</b></div>
+      </div>
+      <div class="io-row">
+        <button class="io-btn" id="exportBtn">Export</button>
+        <button class="io-btn" id="importBtn">Import</button>
+      </div>
+      <div class="io-row">
+        <button class="io-btn" id="printBtn">Print</button>
+        <button class="io-btn" id="signOutBtn">Sign out</button>
+      </div>
+      <button class="io-btn" id="remindBtn">Turn on reminders</button>
+      <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="head">
+      <div class="title"><h2 id="viewTitle">Priority to-do</h2><p id="viewSub">Your open jobs, ranked by what matters most</p></div>
+      <div class="today-date"><span id="dowText"></span><b id="dateText"></b></div>
+    </div>
+
+    <div class="quick">
+      <div class="quick-top">
+        <input class="title" id="qTitle" placeholder="Add a job. Try: ring Annick re invoice #atf !high tomorrow" autocomplete="off">
+        <button class="mic" id="qMic" type="button" title="Dictate" aria-label="Dictate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></button>
+        <button class="add-btn" id="qAdd">Add</button>
+      </div>
+      <div class="quick-hint" id="quickHint">Tip: drop in <b>#atf #annick #pw #pnw #ideas #kb</b>, a <b>!high !med !low</b> flag, a <b>#call</b>, or <b>today tomorrow fri</b> and BOFF files it for you.</div>
+      <div class="quick-opts">
+        <select id="qCat"></select>
+        <select id="qPri"><option value="high">High priority</option><option value="medium" selected>Medium priority</option><option value="low">Low priority</option></select>
+        <select id="qType"><option value="task">Task</option><option value="call">Call note</option><option value="idea">Idea</option></select>
+      </div>
+    </div>
+
+    <div class="note-card" id="noteCard">
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Today's notes</h3>
+      <textarea id="dayNote" placeholder="Jot anything down. Calls to make, thoughts, reminders, the running thread of your day."></textarea>
+    </div>
+
+    <div class="toolbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2b2722" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchInput" placeholder="Search titles and details" autocomplete="off">
+      </div>
+      <select id="sortSel"><option value="priority">Sort by priority</option><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="due">By due date</option><option value="category">By category</option></select>
+    </div>
+
+    <div id="list"></div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle">Edit entry</h3></div>
+    <div class="modal-body">
+      <div class="field"><label>Action point</label><input id="mTitle" placeholder="Top-level action point"></div>
+      <div class="field"><label class="lbl-row">Details <button class="mic sm" id="mMic" type="button" title="Dictate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></button></label><textarea id="mDetails" placeholder="Expand on it. Context, sub-steps, who said what, links, anything. Tap the mic to dictate."></textarea></div>
+      <div class="field-grid">
+        <div class="field"><label>Category</label><select id="mCat"></select></div>
+        <div class="field"><label>Priority</label><select id="mPri"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+      </div>
+      <div class="field-grid">
+        <div class="field"><label>Type</label><select id="mType"><option value="task">Task</option><option value="call">Call note</option><option value="idea">Idea</option></select></div>
+        <div class="field"><label>Due date</label><input id="mDue" type="date"></div>
+      </div>
+      <div class="field" id="callerField" style="display:none"><label>Who called / from</label><input id="mCaller" placeholder="Name or company"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn danger del" id="mDelete">Delete</button>
+      <button class="btn" id="mCancel">Cancel</button>
+      <button class="btn primary" id="mSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* =================================================================
+     CONFIG. Paste your two Supabase values between the quotes below.
+     Both come from Supabase: Project Settings > API.
+     The anon key is meant to be public, your data is protected by login.
+     ================================================================= */
+  var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
+  /* ================================================================= */
+
+  var cloudOn = SUPABASE_URL.indexOf("http") === 0 && SUPABASE_ANON_KEY.length > 20;
+  var RKEY = "boff.remember";
+  function rememberPref() { try { return localStorage.getItem(RKEY) !== "0"; } catch (e) { return true; } }
+  function makeClient(remember) {
+    if (!cloudOn || !window.supabase) return null;
+    var store = remember ? window.localStorage : window.sessionStorage;
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, storage: store } });
+  }
+  var curRemember = rememberPref();
+  var sb = makeClient(curRemember);
+  var user = null;
+
+  var CATS = [
+    { id: "annick", label: "Annick", color: "var(--cat-annick)" },
+    { id: "atf", label: "ATF", color: "var(--cat-atf)" },
+    { id: "pnw", label: "Personal Non Work", color: "var(--cat-pnw)" },
+    { id: "pw", label: "Personal Work", color: "var(--cat-pw)" },
+    { id: "ideas", label: "Ideas", color: "var(--cat-ideas)" },
+    { id: "kb", label: "Knowledge Bank", color: "var(--cat-kb)" }
+  ];
+  var PRI_RANK = { high: 0, medium: 1, low: 2 };
+  var PRI_LABEL = { high: "High", medium: "Medium", low: "Low" };
+
+  var state = { entries: [], notes: {} };
+  var view = "todo", search = "", sort = "priority", openIds = {}, editingId = null;
+
+  var LKEY = "boff.cache.v1", PKEY = "boff.pending.v1";
+  var pending = { entries: {}, notes: {}, deletes: {} };
+
+  /* ---------- local cache ---------- */
+  function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify({ entries: state.entries, notes: state.notes })); } catch (e) {} }
+  function loadLocal() { try { var r = localStorage.getItem(LKEY); if (r) { var d = JSON.parse(r); if (d && d.entries) { state.entries = d.entries; state.notes = d.notes || {}; } } } catch (e) {} }
+  function clearLocal() { try { localStorage.removeItem(LKEY); localStorage.removeItem(PKEY); } catch (e) {} }
+  function savePending() { try { localStorage.setItem(PKEY, JSON.stringify(pending)); } catch (e) {} }
+  function loadPending() { try { var r = localStorage.getItem(PKEY); if (r) { var p = JSON.parse(r); if (p) pending = p; } } catch (e) {} }
+  function dirtyEntry(id) { pending.entries[id] = 1; delete pending.deletes[id]; savePending(); }
+  function dirtyDelete(id) { pending.deletes[id] = 1; delete pending.entries[id]; savePending(); }
+  function dirtyNote(day) { pending.notes[day] = 1; savePending(); }
+  function pendingCount() { return Object.keys(pending.entries).length + Object.keys(pending.notes).length + Object.keys(pending.deletes).length; }
+
+  function persist() { saveLocal(); scheduleSync(); }
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function catOf(id) { for (var i = 0; i < CATS.length; i++) if (CATS[i].id === id) return CATS[i]; return CATS[0]; }
+  function todayKey() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+
+  function fmtDue(s) {
+    if (!s) return null;
+    var d = new Date(s + "T00:00:00"); var t = new Date(); t.setHours(0, 0, 0, 0);
+    var diff = Math.round((d - t) / 86400000);
+    var label = d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    if (diff === 0) return { txt: "Due today", over: true };
+    if (diff < 0) return { txt: "Overdue " + label, over: true };
+    if (diff === 1) return { txt: "Due tomorrow", over: false };
+    return { txt: "Due " + label, over: false };
+  }
+
+  function fillCatSelect(sel) { sel.innerHTML = ""; for (var i = 0; i < CATS.length; i++) { var o = document.createElement("option"); o.value = CATS[i].id; o.textContent = CATS[i].label; sel.appendChild(o); } }
+
+  /* ---------- CRUD ---------- */
+  function addEntry(title, cat, pri, type) {
+    var e = { id: uid(), title: title.trim(), details: "", category: cat, priority: pri, type: type, caller: "", due: "", done: false, created: Date.now(), updated: Date.now() };
+    state.entries.push(e); dirtyEntry(e.id); persist(); return e;
+  }
+  function getEntry(id) { for (var i = 0; i < state.entries.length; i++) if (state.entries[i].id === id) return state.entries[i]; return null; }
+  function delEntry(id) { state.entries = state.entries.filter(function (e) { return e.id !== id; }); dirtyDelete(id); persist(); }
+
+  /* ---------- cloud sync ---------- */
+  function entryRow(e) { return { user_id: user.id, id: e.id, title: e.title, details: e.details, category: e.category, priority: e.priority, type: e.type, caller: e.caller, due: e.due || null, done: e.done, created: e.created, updated: e.updated }; }
+  function cleanRow(r) { return { id: r.id, title: r.title, details: r.details || "", category: r.category, priority: r.priority, type: r.type, caller: r.caller || "", due: r.due || "", done: !!r.done, created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
+
+  function flush() {
+    if (!sb || !user) return Promise.resolve();
+    var ops = [];
+    Object.keys(pending.deletes).forEach(function (id) {
+      ops.push(function () { return sb.from("entries").delete().eq("user_id", user.id).eq("id", id).then(function (r) { if (r.error) throw r.error; delete pending.deletes[id]; }); });
+    });
+    Object.keys(pending.entries).forEach(function (id) {
+      ops.push(function () { var e = getEntry(id); if (!e) { delete pending.entries[id]; return Promise.resolve(); } return sb.from("entries").upsert(entryRow(e), { onConflict: "user_id,id" }).then(function (r) { if (r.error) throw r.error; delete pending.entries[id]; }); });
+    });
+    Object.keys(pending.notes).forEach(function (day) {
+      ops.push(function () { return sb.from("notes").upsert({ user_id: user.id, day: day, body: state.notes[day] || "", updated: Date.now() }, { onConflict: "user_id,day" }).then(function (r) { if (r.error) throw r.error; delete pending.notes[day]; }); });
+    });
+    var chain = Promise.resolve();
+    ops.forEach(function (op) { chain = chain.then(op); });
+    return chain.then(function () { savePending(); });
+  }
+
+  function pull() {
+    return sb.from("entries").select("*").then(function (er) {
+      if (er.error) throw er.error;
+      return sb.from("notes").select("*").then(function (nr) {
+        if (nr.error) throw nr.error;
+        var notes = {}; (nr.data || []).forEach(function (r) { notes[r.day] = r.body || ""; });
+        return { entries: (er.data || []).map(cleanRow), notes: notes };
+      });
+    });
+  }
+
+  var syncTimer = null, syncing = false;
+  function scheduleSync() { if (!sb || !user) { saveLocal(); return; } clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, 700); }
+  function syncNow() {
+    if (!sb || !user || syncing) return Promise.resolve();
+    syncing = true; setSync("busy", "Syncing");
+    return flush().then(function () {
+      if (pendingCount() === 0) {
+        return pull().then(function (cloud) {
+          state.entries = cloud.entries; state.notes = cloud.notes;
+          saveLocal();
+          if (document.activeElement !== document.getElementById("dayNote")) loadDayNote();
+          render(); notifyDue(false);
+        });
+      }
+    }).then(function () {
+      setSync(pendingCount() ? "warn" : "ok", pendingCount() ? "Some changes waiting" : "All synced");
+    }).catch(function () {
+      setSync("warn", "Offline, will sync later");
+    }).then(function () { syncing = false; });
+  }
+
+  function setSync(cls, txt) {
+    var d = document.getElementById("syncDot"); d.className = "sync-dot " + cls;
+    document.getElementById("syncTxt").textContent = txt;
+  }
+
+  /* ---------- filtering / sorting ---------- */
+  function visibleEntries() {
+    var arr = state.entries.slice();
+    var q = search.trim().toLowerCase();
+    if (q) arr = arr.filter(function (e) { return (e.title + " " + e.details + " " + (e.caller || "")).toLowerCase().indexOf(q) > -1; });
+    if (view === "todo") arr = arr.filter(function (e) { return !e.done; });
+    else if (view === "done") arr = arr.filter(function (e) { return e.done; });
+    else if (view === "calls") arr = arr.filter(function (e) { return e.type === "call"; });
+    else if (view === "today") { var tk = todayKey(); arr = arr.filter(function (e) { return !e.done && e.due && e.due <= tk; }); }
+    else if (view.indexOf("cat:") === 0) { var cid = view.slice(4); arr = arr.filter(function (e) { return e.category === cid; }); }
+    return sortEntries(arr);
+  }
+  function sortEntries(arr) {
+    var s = (view === "todo" || view === "today") ? "priority" : sort;
+    arr.sort(function (a, b) {
+      if (s === "priority") {
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        if (PRI_RANK[a.priority] !== PRI_RANK[b.priority]) return PRI_RANK[a.priority] - PRI_RANK[b.priority];
+        var ad = a.due || "9999", bd = b.due || "9999"; if (ad !== bd) return ad < bd ? -1 : 1;
+        return b.created - a.created;
+      }
+      if (s === "newest") return b.created - a.created;
+      if (s === "oldest") return a.created - b.created;
+      if (s === "due") { var x = a.due || "9999", y = b.due || "9999"; return x < y ? -1 : x > y ? 1 : 0; }
+      if (s === "category") { return a.category < b.category ? -1 : a.category > b.category ? 1 : b.created - a.created; }
+      return 0;
+    });
+    return arr;
+  }
+
+  /* ---------- render ---------- */
+  function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+
+  function render() { renderNav(); renderHead(); renderList(); renderStats(); }
+
+  function renderNav() {
+    document.querySelectorAll(".nav-btn[data-view]").forEach(function (b) { b.classList.toggle("active", b.dataset.view === view); });
+    document.getElementById("c-todo").textContent = state.entries.filter(function (e) { return !e.done; }).length || "";
+    document.getElementById("c-all").textContent = state.entries.length || "";
+    document.getElementById("c-calls").textContent = state.entries.filter(function (e) { return e.type === "call"; }).length || "";
+    document.getElementById("c-done").textContent = state.entries.filter(function (e) { return e.done; }).length || "";
+    var tk = todayKey();
+    document.getElementById("c-today").textContent = state.entries.filter(function (e) { return !e.done && e.due && e.due <= tk; }).length || "";
+    var nav = document.getElementById("catNav"); nav.innerHTML = "";
+    CATS.forEach(function (c) {
+      var n = state.entries.filter(function (e) { return e.category === c.id && !e.done; }).length;
+      var b = el("button", "nav-btn"); b.dataset.view = "cat:" + c.id; if (view === "cat:" + c.id) b.classList.add("active");
+      var sw = el("span", "swatch"); sw.style.background = c.color; b.appendChild(sw);
+      b.appendChild(document.createTextNode(c.label));
+      b.appendChild(el("span", "count", n || ""));
+      b.addEventListener("click", function () { setView("cat:" + c.id); });
+      nav.appendChild(b);
+    });
+  }
+  function renderHead() {
+    var titles = { todo: ["Priority to-do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All entries", "Everything in the book"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"] };
+    var t; if (view.indexOf("cat:") === 0) { var c = catOf(view.slice(4)); t = [c.label, "Everything filed under " + c.label]; } else t = titles[view] || ["", ""];
+    document.getElementById("viewTitle").textContent = t[0];
+    document.getElementById("viewSub").textContent = t[1];
+    document.getElementById("noteCard").style.display = (view === "today" || view === "todo") ? "" : "none";
+  }
+  function renderList() {
+    var list = document.getElementById("list"); list.innerHTML = "";
+    if (view === "today") list.appendChild(briefingNode());
+    var entries = visibleEntries();
+    if (!entries.length) {
+      if (view !== "today") {
+        var em = el("div", "empty");
+        em.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+        em.appendChild(el("p", null, search ? "Nothing matches that search." : "Nothing here yet. Add your first action point above."));
+        list.appendChild(em);
+      }
+      return;
+    }
+    if (view === "todo" && sort === "priority") {
+      ["high", "medium", "low"].forEach(function (p) {
+        var grp = entries.filter(function (e) { return e.priority === p; }); if (!grp.length) return;
+        var g = el("div", "group-label"); g.appendChild(el("span", null, PRI_LABEL[p] + " priority")); g.appendChild(el("span", "ln")); list.appendChild(g);
+        grp.forEach(function (e) { list.appendChild(entryNode(e)); });
+      });
+    } else { entries.forEach(function (e) { list.appendChild(entryNode(e)); }); }
+  }
+  function entryNode(e) {
+    var wrap = el("div", "entry p-" + e.priority + (e.done ? " done" : "") + (openIds[e.id] ? " open" : ""));
+    var row = el("div", "entry-row");
+    var chk = el("div", "check" + (e.done ? " on" : ""));
+    chk.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+    chk.addEventListener("click", function (ev) { ev.stopPropagation(); e.done = !e.done; e.updated = Date.now(); dirtyEntry(e.id); persist(); render(); });
+    row.appendChild(chk);
+    var body = el("div", "entry-body");
+    body.appendChild(el("div", "entry-title", e.title));
+    var meta = el("div", "entry-meta");
+    var c = catOf(e.category); var cb = el("span", "badge cat-badge", c.label); cb.style.background = c.color; meta.appendChild(cb);
+    if (!e.done) meta.appendChild(el("span", "badge pri-badge pri-" + e.priority, PRI_LABEL[e.priority]));
+    if (e.type === "call") meta.appendChild(el("span", "caller-tag", e.caller ? "Call: " + e.caller : "Call note"));
+    else if (e.type === "idea") meta.appendChild(el("span", "caller-tag", "Idea"));
+    var due = fmtDue(e.due); if (due && !e.done) meta.appendChild(el("span", "meta-txt" + (due.over ? " over" : ""), due.txt));
+    body.appendChild(meta);
+    body.addEventListener("click", function () { openIds[e.id] = !openIds[e.id]; render(); });
+    row.appendChild(body);
+    var actions = el("div", "entry-actions");
+    var editBtn = el("button", "icobtn"); editBtn.title = "Edit";
+    editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+    editBtn.addEventListener("click", function (ev) { ev.stopPropagation(); openModal(e.id); });
+    actions.appendChild(editBtn);
+    var chev = el("button", "icobtn chev"); chev.title = "Expand";
+    chev.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
+    chev.addEventListener("click", function (ev) { ev.stopPropagation(); openIds[e.id] = !openIds[e.id]; render(); });
+    actions.appendChild(chev); row.appendChild(actions); wrap.appendChild(row);
+    var detail = el("div", "entry-detail");
+    if (e.details && e.details.trim()) detail.appendChild(el("div", "det-text", e.details));
+    else detail.appendChild(el("div", "det-empty", "No extra detail yet. Hit edit to expand on this."));
+    if (e.due) {
+      var cal = el("button", "cal-btn");
+      cal.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Add to calendar';
+      cal.addEventListener("click", function (ev) { ev.stopPropagation(); addToCalendar(e); });
+      detail.appendChild(cal);
+    }
+    detail.appendChild(el("div", "det-foot", "Added " + new Date(e.created).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })));
+    wrap.appendChild(detail);
+    return wrap;
+  }
+  function renderStats() {
+    document.getElementById("s-open").textContent = state.entries.filter(function (e) { return !e.done; }).length;
+    document.getElementById("s-done").textContent = state.entries.filter(function (e) { return e.done; }).length;
+    document.getElementById("s-high").textContent = state.entries.filter(function (e) { return !e.done && e.priority === "high"; }).length;
+  }
+
+  function setView(v) { view = v; document.getElementById("side").classList.remove("open"); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+
+  /* ---------- modal ---------- */
+  function openModal(id) {
+    editingId = id; var e = getEntry(id); if (!e) return;
+    document.getElementById("mTitle").value = e.title;
+    document.getElementById("mDetails").value = e.details || "";
+    document.getElementById("mCat").value = e.category;
+    document.getElementById("mPri").value = e.priority;
+    document.getElementById("mType").value = e.type;
+    document.getElementById("mDue").value = e.due || "";
+    document.getElementById("mCaller").value = e.caller || "";
+    toggleCaller(e.type);
+    document.getElementById("scrim").classList.add("show");
+    document.getElementById("mTitle").focus();
+  }
+  function closeModal() { document.getElementById("scrim").classList.remove("show"); editingId = null; }
+  function toggleCaller(type) { document.getElementById("callerField").style.display = type === "call" ? "" : "none"; }
+  function saveModal() {
+    var e = getEntry(editingId); if (!e) return;
+    var title = document.getElementById("mTitle").value.trim();
+    if (!title) { toast("Give it a title first"); return; }
+    e.title = title; e.details = document.getElementById("mDetails").value;
+    e.category = document.getElementById("mCat").value; e.priority = document.getElementById("mPri").value;
+    e.type = document.getElementById("mType").value; e.due = document.getElementById("mDue").value;
+    e.caller = document.getElementById("mCaller").value; e.updated = Date.now();
+    dirtyEntry(e.id); persist(); closeModal(); render(); toast("Saved");
+  }
+
+  /* ---------- export / import / print ---------- */
+  function exportData() {
+    var payload = { app: "boff", version: 2, exported: new Date().toISOString(), entries: state.entries, notes: state.notes };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob); var a = document.createElement("a");
+    a.href = url; a.download = "boff-" + todayKey() + ".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    toast("Exported your day book");
+  }
+  function importData(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var d = JSON.parse(reader.result);
+        if (!d || !Array.isArray(d.entries)) throw new Error("bad");
+        if (!confirm("Replace your current day book with this file? This overwrites what's here now.")) return;
+        state.entries = d.entries; state.notes = d.notes || {};
+        state.entries.forEach(function (e) { dirtyEntry(e.id); });
+        Object.keys(state.notes).forEach(function (day) { dirtyNote(day); });
+        persist(); loadDayNote(); render(); toast("Imported " + d.entries.length + " entries");
+      } catch (err) { toast("That file didn't look like a day book export"); }
+    };
+    reader.readAsText(file);
+  }
+
+  function loadDayNote() { document.getElementById("dayNote").value = state.notes[todayKey()] || ""; }
+
+  var toastTimer;
+  function toast(msg) { var t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2200); }
+
+  /* ---------- auth ---------- */
+  function showAuth() {
+    document.getElementById("auth").classList.add("show");
+    document.querySelector(".app").style.display = "none";
+    document.getElementById("authFoot").textContent = "First time? Create your account once, then sign in from any device.";
+  }
+  function showApp() {
+    document.getElementById("auth").classList.remove("show");
+    document.querySelector(".app").style.display = "";
+    document.getElementById("acctTxt").textContent = user ? user.email : "";
+  }
+  function authErr(m) { document.getElementById("authErr").textContent = m || ""; }
+
+  function applyRemember() {
+    var want = document.getElementById("rememberMe").checked;
+    try { localStorage.setItem(RKEY, want ? "1" : "0"); } catch (e) {}
+    if (want !== curRemember) { curRemember = want; sb = makeClient(want); attach(); }
+  }
+  function doSignIn() {
+    var email = document.getElementById("authEmail").value.trim(); var pass = document.getElementById("authPass").value;
+    if (!email || !pass) { authErr("Enter your email and password."); return; }
+    authErr(""); applyRemember();
+    sb.auth.signInWithPassword({ email: email, password: pass }).then(function (res) { if (res.error) authErr(res.error.message); });
+  }
+  function doSignUp() {
+    var email = document.getElementById("authEmail").value.trim(); var pass = document.getElementById("authPass").value;
+    if (!email || pass.length < 6) { authErr("Use a valid email and a password of at least 6 characters."); return; }
+    authErr(""); applyRemember();
+    sb.auth.signUp({ email: email, password: pass }).then(function (res) {
+      if (res.error) { authErr(res.error.message); return; }
+      if (res.data && res.data.session) return; /* auto signed in */
+      authErr(""); document.getElementById("authFoot").textContent = "Account created. If email confirmation is on, click the link in your inbox, then sign in.";
+    });
+  }
+  function doSignOut() { if (!sb) return; sb.auth.signOut().then(function () { user = null; state.entries = []; state.notes = {}; clearLocal(); render(); showAuth(); }); }
+
+  function attach() {
+    if (!sb) return;
+    sb.auth.getSession().then(function (s) {
+      user = (s && s.data && s.data.session) ? s.data.session.user : null;
+      if (user) { showApp(); syncNow(); } else { showAuth(); setSync("", "Signed out"); }
+    });
+    sb.auth.onAuthStateChange(function (_evt, session) {
+      user = session ? session.user : null;
+      if (user) { showApp(); syncNow(); } else { showAuth(); setSync("", "Signed out"); }
+    });
+  }
+
+  /* ---------- smart quick-add ---------- */
+  var CAT_WORDS = { annick: "annick", atf: "atf", pw: "pw", pnw: "pnw", ideas: "ideas", idea: "ideas", kb: "kb", knowledge: "kb" };
+  var DOW = { sun: 0, mon: 1, tue: 2, tues: 2, wed: 3, thu: 4, thur: 4, thurs: 4, fri: 5, sat: 6 };
+  function dateAhead(days) { var d = new Date(); d.setDate(d.getDate() + days); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function nextDow(target) { var diff = (target - new Date().getDay() + 7) % 7; return dateAhead(diff); }
+  function parseQuickAdd(raw, def) {
+    var out = { title: raw, category: def.category, priority: def.priority, type: def.type, due: "" };
+    var text = " " + raw + " ";
+    var pm = text.match(/\s!(high|hi|h|medium|med|m|low|lo|l|1|2|3)\b/i);
+    if (pm) { var p = pm[1].toLowerCase(); out.priority = (p.charAt(0) === "h" || p === "1") ? "high" : (p.charAt(0) === "l" || p === "3") ? "low" : "medium"; text = text.replace(pm[0], " "); }
+    Object.keys(CAT_WORDS).forEach(function (w) { if ((w === "annick" || w === "atf") && new RegExp("\\b" + w + "\\b", "i").test(text)) out.category = CAT_WORDS[w]; });
+    if (/\bcall(ed|ing)?\b/i.test(text)) out.type = "call";
+    var tags = text.match(/#[a-z]+/ig) || [];
+    tags.forEach(function (tg) {
+      var key = tg.slice(1).toLowerCase();
+      if (key === "call") { out.type = "call"; text = text.replace(new RegExp(tg, "i"), " "); }
+      else if (key === "idea") { out.type = "idea"; out.category = "ideas"; text = text.replace(new RegExp(tg, "i"), " "); }
+      else if (CAT_WORDS[key]) { out.category = CAT_WORDS[key]; text = text.replace(new RegExp(tg, "i"), " "); }
+    });
+    if (/\btoday\b/i.test(text)) { out.due = dateAhead(0); text = text.replace(/\btoday\b/i, " "); }
+    else if (/\btomorrow\b|\btom\b/i.test(text)) { out.due = dateAhead(1); text = text.replace(/\btomorrow\b|\btom\b/i, " "); }
+    else if (/\bnext week\b/i.test(text)) { out.due = dateAhead(7); text = text.replace(/\bnext week\b/i, " "); }
+    else { var dm = text.match(/\b(sun|mon|tues|tue|wed|thurs|thur|thu|fri|sat)\b/i); if (dm) { out.due = nextDow(DOW[dm[1].toLowerCase()]); text = text.replace(dm[0], " "); } }
+    out.title = text.replace(/\s+/g, " ").trim() || raw.trim();
+    return out;
+  }
+
+  /* ---------- voice dictation ---------- */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, recBtn = null, recTarget = null;
+  function dictationSupported() { return !!SR; }
+  function startDictation(targetEl, btn) {
+    if (!SR) { toast("Voice input isn't supported here. Use your keyboard's own mic."); return; }
+    if (rec) { rec.stop(); return; }
+    rec = new SR(); rec.lang = "en-GB"; rec.interimResults = false; rec.continuous = true;
+    recBtn = btn; recTarget = targetEl; btn.classList.add("active");
+    rec.onresult = function (ev) {
+      var add = "";
+      for (var i = ev.resultIndex; i < ev.results.length; i++) { if (ev.results[i].isFinal) add += ev.results[i][0].transcript; }
+      if (add) { var sep = (recTarget.value && !/\s$/.test(recTarget.value)) ? " " : ""; recTarget.value += sep + add.trim(); recTarget.dispatchEvent(new Event("input", { bubbles: true })); }
+    };
+    rec.onerror = function () { stopDictation(); };
+    rec.onend = function () { stopDictation(); };
+    try { rec.start(); } catch (e) { stopDictation(); }
+  }
+  function stopDictation() { if (recBtn) recBtn.classList.remove("active"); recBtn = null; recTarget = null; rec = null; }
+
+  /* ---------- add to calendar (.ics) ---------- */
+  function pad2(n) { return String(n).padStart(2, "0"); }
+  function addToCalendar(e) {
+    if (!e.due) { toast("Add a due date first"); return; }
+    var start = e.due.replace(/-/g, "");
+    var d = new Date(e.due + "T00:00:00"); d.setDate(d.getDate() + 1);
+    var end = d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate());
+    var n = new Date();
+    var stamp = n.getUTCFullYear() + pad2(n.getUTCMonth() + 1) + pad2(n.getUTCDate()) + "T" + pad2(n.getUTCHours()) + pad2(n.getUTCMinutes()) + pad2(n.getUTCSeconds()) + "Z";
+    function esc(s) { return (s || "").replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;"); }
+    var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//BOFF//EN", "BEGIN:VEVENT", "UID:" + e.id + "@boff", "DTSTAMP:" + stamp, "DTSTART;VALUE=DATE:" + start, "DTEND;VALUE=DATE:" + end, "SUMMARY:" + esc(e.title), "DESCRIPTION:" + esc(e.details), "BEGIN:VALARM", "TRIGGER:-PT9H", "ACTION:DISPLAY", "DESCRIPTION:" + esc(e.title), "END:VALARM", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+    var blob = new Blob([ics], { type: "text/calendar" }); var url = URL.createObjectURL(blob);
+    var a = document.createElement("a"); a.href = url; a.download = "boff-" + e.id + ".ics";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    toast("Calendar event downloaded. Open it to add the reminder.");
+  }
+
+  /* ---------- reminders ---------- */
+  var notifiedToday = false;
+  function updateRemindBtn() {
+    var b = document.getElementById("remindBtn"); if (!b) return;
+    if (!("Notification" in window)) { b.style.display = "none"; return; }
+    if (Notification.permission === "granted") b.textContent = "Reminders on";
+    else if (Notification.permission === "denied") b.textContent = "Reminders blocked";
+    else b.textContent = "Turn on reminders";
+  }
+  function enableReminders() {
+    if (!("Notification" in window)) { toast("This browser can't show reminders"); return; }
+    if (Notification.permission === "granted") { notifyDue(true); return; }
+    Notification.requestPermission().then(function () { updateRemindBtn(); notifyDue(true); });
+  }
+  function notifyDue(force) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    if (!force && notifiedToday) return;
+    var tk = todayKey();
+    var due = state.entries.filter(function (e) { return !e.done && e.due && e.due <= tk; });
+    if (!due.length) { if (force) toast("Nothing due. You're clear."); return; }
+    var over = due.filter(function (e) { return e.due < tk; }).length;
+    notifiedToday = true;
+    var body = due.length + (due.length === 1 ? " item" : " items") + " due today" + (over ? ", " + over + " running late" : "");
+    try { new Notification("BOFF", { body: body, tag: "boff-due-" + tk }); } catch (e) {}
+  }
+
+  /* ---------- morning briefing ---------- */
+  function numNode(n, label, warn) { var d = el("div", "num" + (warn ? " warn" : "")); d.appendChild(el("b", null, String(n))); d.appendChild(el("span", null, label)); return d; }
+  function briefingNode() {
+    var tk = todayKey();
+    var open = state.entries.filter(function (e) { return !e.done; });
+    var dueToday = open.filter(function (e) { return e.due === tk; }).length;
+    var overdue = open.filter(function (e) { return e.due && e.due < tk; }).length;
+    var high = open.filter(function (e) { return e.priority === "high"; }).length;
+    var h = new Date().getHours();
+    var greet = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+    var b = el("div", "briefing");
+    b.appendChild(el("h3", null, greet + "."));
+    b.appendChild(el("p", null, overdue ? "A few things need catching up on." : dueToday ? "Here's what's on for today." : "Nothing overdue. Clean slate."));
+    var nums = el("div", "nums");
+    nums.appendChild(numNode(dueToday, "Due today", false));
+    nums.appendChild(numNode(overdue, "Overdue", overdue > 0));
+    nums.appendChild(numNode(high, "High priority", false));
+    b.appendChild(nums);
+    if (overdue > 0) { var carry = el("button", "carry", "Carry " + overdue + " overdue to today"); carry.addEventListener("click", carryOverdue); b.appendChild(carry); }
+    return b;
+  }
+  function carryOverdue() {
+    var tk = todayKey();
+    state.entries.forEach(function (e) { if (!e.done && e.due && e.due < tk) { e.due = tk; e.updated = Date.now(); dirtyEntry(e.id); } });
+    persist(); render(); toast("Pulled overdue jobs to today");
+  }
+
+  /* ---------- init ---------- */
+  function start() {
+    loadLocal(); loadPending();
+    fillCatSelect(document.getElementById("qCat"));
+    fillCatSelect(document.getElementById("mCat"));
+    var now = new Date();
+    document.getElementById("dowText").textContent = now.toLocaleDateString("en-GB", { weekday: "long" });
+    document.getElementById("dateText").textContent = now.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+
+    document.querySelectorAll(".nav-btn[data-view]").forEach(function (b) { b.addEventListener("click", function () { setView(b.dataset.view); }); });
+
+    function quickAdd() {
+      var t = document.getElementById("qTitle"); if (!t.value.trim()) { t.focus(); return; }
+      var def = { category: document.getElementById("qCat").value, priority: document.getElementById("qPri").value, type: document.getElementById("qType").value };
+      var p = parseQuickAdd(t.value, def);
+      var e = addEntry(p.title, p.category, p.priority, p.type);
+      if (p.due) { e.due = p.due; e.updated = Date.now(); dirtyEntry(e.id); persist(); }
+      t.value = ""; t.focus(); render(); toast("Added to the book");
+    }
+    document.getElementById("qAdd").addEventListener("click", quickAdd);
+    document.getElementById("qTitle").addEventListener("keydown", function (ev) { if (ev.key === "Enter") quickAdd(); });
+    document.getElementById("searchInput").addEventListener("input", function (ev) { search = ev.target.value; render(); });
+    document.getElementById("sortSel").addEventListener("change", function (ev) { sort = ev.target.value; render(); });
+    document.getElementById("mSave").addEventListener("click", saveModal);
+    document.getElementById("mCancel").addEventListener("click", closeModal);
+    document.getElementById("mDelete").addEventListener("click", function () { if (editingId && confirm("Delete this entry for good?")) { delEntry(editingId); closeModal(); render(); toast("Deleted"); } });
+    document.getElementById("mType").addEventListener("change", function (ev) { toggleCaller(ev.target.value); });
+    document.getElementById("scrim").addEventListener("click", function (ev) { if (ev.target.id === "scrim") closeModal(); });
+    document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeModal(); });
+    document.getElementById("dayNote").addEventListener("input", function (ev) { state.notes[todayKey()] = ev.target.value; dirtyNote(todayKey()); persist(); });
+    document.getElementById("exportBtn").addEventListener("click", exportData);
+    document.getElementById("importBtn").addEventListener("click", function () { document.getElementById("fileInput").click(); });
+    document.getElementById("fileInput").addEventListener("change", function (ev) { if (ev.target.files[0]) importData(ev.target.files[0]); ev.target.value = ""; });
+    document.getElementById("printBtn").addEventListener("click", function () { window.print(); });
+    document.getElementById("remindBtn").addEventListener("click", enableReminders);
+    var qMic = document.getElementById("qMic"), mMic = document.getElementById("mMic");
+    if (dictationSupported()) {
+      qMic.addEventListener("click", function () { startDictation(document.getElementById("qTitle"), qMic); });
+      mMic.addEventListener("click", function () { startDictation(document.getElementById("mDetails"), mMic); });
+    } else { qMic.style.display = "none"; mMic.style.display = "none"; }
+    updateRemindBtn();
+    document.getElementById("signOutBtn").addEventListener("click", doSignOut);
+    document.getElementById("menuToggle").addEventListener("click", function () { document.getElementById("side").classList.toggle("open"); });
+    document.getElementById("signInBtn").addEventListener("click", doSignIn);
+    document.getElementById("signUpBtn").addEventListener("click", doSignUp);
+    document.getElementById("authPass").addEventListener("keydown", function (ev) { if (ev.key === "Enter") doSignIn(); });
+
+    loadDayNote(); render(); notifyDue(false);
+
+    document.getElementById("rememberMe").checked = curRemember;
+    if (sb) { attach(); }
+    else {
+      showApp(); setSync("warn", "Local only, not configured");
+      document.getElementById("acctTxt").textContent = "Add your Supabase keys to sync";
+    }
+  }
+
+  start();
+})();
+</script>
+<script>if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }</script>
+</body>
+</html>
