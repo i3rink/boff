@@ -151,6 +151,18 @@
   .pri-badge { background: transparent; border: 1px solid; }
   .pri-high { color: var(--p-high); border-color: var(--p-high); } .pri-medium { color: var(--p-med); border-color: var(--p-med); } .pri-low { color: var(--p-low); border-color: var(--p-low); }
   .meta-txt { font-size: 11.5px; color: var(--ink-faint); }
+  .tag-chip { font-size: 11px; background: var(--paper-2); color: var(--ink-soft); padding: 2px 9px; border-radius: 20px; cursor: pointer; border: 1px solid transparent; }
+  .tag-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .tag-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .tag-chips:empty { display: none; }
+  .tag-edit { display: inline-flex; align-items: center; gap: 4px; background: var(--accent-soft); color: var(--ink); border-radius: 20px; padding: 3px 6px 3px 11px; font-size: 12.5px; }
+  .tag-edit button { border: none; background: transparent; cursor: pointer; color: var(--ink-soft); font-size: 15px; line-height: 1; padding: 0 2px; }
+  .tag-suggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag-suggest .tag-suggest-label { font-size: 11px; color: var(--ink-faint); width: 100%; margin-bottom: 2px; }
+  .tag-suggest .s { font-size: 12px; border: 1px dashed var(--line-strong); color: var(--ink-soft); border-radius: 20px; padding: 3px 11px; cursor: pointer; background: transparent; }
+  .tag-suggest .s:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
+  .tagfilter { display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: var(--paper); border-radius: 20px; padding: 6px 9px 6px 13px; font-size: 12.5px; }
+  .tagfilter button { border: none; background: transparent; color: var(--paper); cursor: pointer; font-size: 15px; line-height: 1; }
   .meta-txt.over { color: var(--accent); font-weight: 600; }
   .caller-tag { font-size: 11.5px; color: var(--ink-soft); }
   .entry-actions { display: flex; gap: 4px; flex: none; }
@@ -161,7 +173,18 @@
   .entry.open .chev { transform: rotate(90deg); }
   .entry-detail { display: none; padding: 0 17px 15px 49px; }
   .entry.open .entry-detail { display: block; }
-  .entry-detail .det-text { font-size: 14px; color: var(--ink-soft); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .entry-detail .det-text { font-size: 14px; color: var(--ink-soft); line-height: 1.6; word-break: break-word; }
+  .entry-detail .det-text p { margin: 0 0 8px; }
+  .entry-detail .det-text p:last-child { margin-bottom: 0; }
+  .entry-detail .det-text ul, .entry-detail .det-text ol { margin: 4px 0 8px 22px; }
+  .entry-detail .det-text li { margin: 2px 0; }
+  .entry-detail .det-text h4 { font-size: 14.5px; font-weight: 700; margin: 10px 0 4px; color: var(--ink); }
+  .entry-detail .det-text hr { border: none; border-top: 1px solid var(--line); margin: 10px 0; }
+  .entry-detail .det-text strong { color: var(--ink); font-weight: 700; }
+  .entry-detail .det-text code { background: var(--paper-2); padding: 1px 5px; border-radius: 5px; font-size: 13px; }
+  .md-bar { display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; }
+  .md-bar button { border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink-soft); border-radius: 7px; padding: 5px 10px; font: inherit; font-size: 12.5px; cursor: pointer; min-width: 30px; }
+  .md-bar button:hover { border-color: var(--accent); color: var(--accent); }
   .entry-detail .det-empty { font-style: italic; color: var(--ink-faint); font-size: 13px; }
   .entry-detail .det-foot { margin-top: 10px; font-size: 11px; color: var(--ink-faint); }
   .empty { text-align: center; padding: 60px 20px; color: var(--ink-faint); }
@@ -197,6 +220,7 @@
   .cat-del { border: none; background: transparent; color: var(--ink-faint); font-size: 22px; line-height: 1; cursor: pointer; padding: 2px 9px; border-radius: 7px; flex: none; }
   .cat-del:hover { background: rgba(182,73,42,.08); color: var(--accent); }
   #catAddBtn { width: 100%; margin-top: 6px; border-style: dashed; color: var(--ink-soft); }
+  .cat-tag { font-size: 11.5px; color: var(--ink-faint); flex: none; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .menu-toggle { display: none; }
 
@@ -332,6 +356,7 @@
       </div>
       <select id="sortSel"><option value="priority">Sort by priority</option><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="due">By due date</option><option value="category">By category</option></select>
       <select id="periodSel" style="display:none"><option value="all">All time</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="thismonth">This month</option><option value="lastmonth">Last month</option><option value="thisyear">This year</option></select>
+      <span id="tagFilterWrap"></span>
     </div>
 
     <div id="list"></div>
@@ -343,7 +368,16 @@
     <div class="modal-head"><h3 id="modalTitle">Edit entry</h3></div>
     <div class="modal-body">
       <div class="field"><label>Action point</label><input id="mTitle" placeholder="Top-level action point"></div>
-      <div class="field"><label class="lbl-row">Details <button class="mic sm" id="mMic" type="button" title="Dictate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></button></label><textarea id="mDetails" placeholder="Expand on it. Context, sub-steps, who said what, links, anything. Tap the mic to dictate."></textarea></div>
+      <div class="field"><label class="lbl-row">Details <button class="mic sm" id="mMic" type="button" title="Dictate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></button></label>
+      <div class="md-bar">
+        <button type="button" data-md="bold" title="Bold"><b>B</b></button>
+        <button type="button" data-md="italic" title="Italic"><i>I</i></button>
+        <button type="button" data-md="ul" title="Bulleted list">&bull; List</button>
+        <button type="button" data-md="ol" title="Numbered list">1. List</button>
+        <button type="button" data-md="h" title="Heading">H</button>
+        <button type="button" data-md="hr" title="Divider">&mdash;</button>
+      </div>
+      <textarea id="mDetails" placeholder="Expand on it. Use the buttons above for bold, lists and dividers."></textarea></div>
       <div class="field-grid">
         <div class="field"><label>Category</label><select id="mCat"></select></div>
         <div class="field"><label>Priority</label><select id="mPri"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
@@ -353,6 +387,12 @@
         <div class="field"><label>Due date</label><input id="mDue" type="date"></div>
       </div>
       <div class="field" id="callerField" style="display:none"><label>Who called / from</label><input id="mCaller" placeholder="Name or company"></div>
+      <div class="field">
+        <label>Tags</label>
+        <div id="mTagChips" class="tag-chips"></div>
+        <input id="mTagInput" placeholder="Type a tag and press Enter, e.g. sales">
+        <div id="mTagSuggest" class="tag-suggest"></div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn danger del" id="mDelete">Delete</button>
@@ -423,7 +463,7 @@
   var PRI_LABEL = { high: "High", medium: "Medium", low: "Low" };
 
   var state = { entries: [], notes: {} };
-  var view = "todo", search = "", sort = "priority", period = "all", openIds = {}, editingId = null;
+  var view = "todo", search = "", sort = "priority", period = "all", tagFilter = null, openIds = {}, editingId = null;
 
   var LKEY = "boff.cache.v1", PKEY = "boff.pending.v1";
   var pending = { entries: {}, notes: {}, deletes: {} };
@@ -478,15 +518,15 @@
 
   /* ---------- CRUD ---------- */
   function addEntry(title, cat, pri, type) {
-    var e = { id: uid(), title: title.trim(), details: "", category: cat, priority: pri, type: type, caller: "", due: "", done: false, created: Date.now(), updated: Date.now() };
+    var e = { id: uid(), title: title.trim(), details: "", category: cat, priority: pri, type: type, caller: "", due: "", done: false, tags: [], created: Date.now(), updated: Date.now() };
     state.entries.push(e); dirtyEntry(e.id); persist(); return e;
   }
   function getEntry(id) { for (var i = 0; i < state.entries.length; i++) if (state.entries[i].id === id) return state.entries[i]; return null; }
   function delEntry(id) { state.entries = state.entries.filter(function (e) { return e.id !== id; }); dirtyDelete(id); persist(); }
 
   /* ---------- cloud sync ---------- */
-  function entryRow(e) { return { user_id: user.id, id: e.id, title: e.title, details: e.details, category: e.category, priority: e.priority, type: e.type, caller: e.caller, due: e.due || null, done: e.done, created: e.created, updated: e.updated }; }
-  function cleanRow(r) { return { id: r.id, title: r.title, details: r.details || "", category: r.category, priority: r.priority, type: r.type, caller: r.caller || "", due: r.due || "", done: !!r.done, created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
+  function entryRow(e) { return { user_id: user.id, id: e.id, title: e.title, details: e.details, category: e.category, priority: e.priority, type: e.type, caller: e.caller, due: e.due || null, done: e.done, tags: (e.tags && e.tags.length) ? e.tags.join(",") : null, created: e.created, updated: e.updated }; }
+  function cleanRow(r) { return { id: r.id, title: r.title, details: r.details || "", category: r.category, priority: r.priority, type: r.type, caller: r.caller || "", due: r.due || "", done: !!r.done, tags: (r.tags ? String(r.tags).split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []), created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
 
   function flush() {
     if (!sb || !user) return Promise.resolve();
@@ -546,7 +586,8 @@
   function visibleEntries() {
     var arr = state.entries.slice();
     var q = search.trim().toLowerCase();
-    if (q) arr = arr.filter(function (e) { return (e.title + " " + e.details + " " + (e.caller || "")).toLowerCase().indexOf(q) > -1; });
+    if (q) arr = arr.filter(function (e) { return (e.title + " " + e.details + " " + (e.caller || "") + " " + (e.tags || []).join(" ")).toLowerCase().indexOf(q) > -1; });
+    if (tagFilter) arr = arr.filter(function (e) { return (e.tags || []).indexOf(tagFilter) > -1; });
     if (view === "todo") arr = arr.filter(function (e) { return !e.done; });
     else if (view === "done") arr = arr.filter(function (e) { return e.done && inPeriod(e.updated); });
     else if (view === "calls") arr = arr.filter(function (e) { return e.type === "call"; });
@@ -573,10 +614,99 @@
     return arr;
   }
 
+  /* ---------- rich text (lightweight markdown) ---------- */
+  function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function mdInline(s) {
+    return s
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/__([^_]+)__/g, "<strong>$1</strong>")
+      .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>");
+  }
+  function renderMarkdown(src) {
+    var lines = escapeHtml(src).split(/\r?\n/);
+    var html = "", listType = null;
+    function closeList() { if (listType) { html += "</" + listType + ">"; listType = null; } }
+    lines.forEach(function (line) {
+      var t = line.trim();
+      if (t === "---" || t === "***") { closeList(); html += "<hr>"; return; }
+      var h = t.match(/^#{1,3}\s+(.*)$/);
+      if (h) { closeList(); html += "<h4>" + mdInline(h[1]) + "</h4>"; return; }
+      var ul = t.match(/^[-*]\s+(.*)$/);
+      if (ul) { if (listType !== "ul") { closeList(); html += "<ul>"; listType = "ul"; } html += "<li>" + mdInline(ul[1]) + "</li>"; return; }
+      var ol = t.match(/^\d+\.\s+(.*)$/);
+      if (ol) { if (listType !== "ol") { closeList(); html += "<ol>"; listType = "ol"; } html += "<li>" + mdInline(ol[1]) + "</li>"; return; }
+      if (t === "") { closeList(); return; }
+      closeList(); html += "<p>" + mdInline(t) + "</p>";
+    });
+    closeList();
+    return html;
+  }
+  function taWrap(ta, before, after) {
+    var s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
+    var sel = v.slice(s, e) || "text";
+    ta.value = v.slice(0, s) + before + sel + after + v.slice(e);
+    ta.focus(); ta.selectionStart = s + before.length; ta.selectionEnd = s + before.length + sel.length;
+  }
+  function taLinePrefix(ta, prefix) {
+    var s = ta.selectionStart, v = ta.value;
+    var ls = v.lastIndexOf("\n", s - 1) + 1;
+    ta.value = v.slice(0, ls) + prefix + v.slice(ls);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = s + prefix.length;
+  }
+  function taInsert(ta, text) {
+    var s = ta.selectionStart, v = ta.value;
+    ta.value = v.slice(0, s) + text + v.slice(s);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = s + text.length;
+  }
+  function mdAction(kind) {
+    var ta = document.getElementById("mDetails");
+    if (kind === "bold") taWrap(ta, "**", "**");
+    else if (kind === "italic") taWrap(ta, "*", "*");
+    else if (kind === "ul") taLinePrefix(ta, "- ");
+    else if (kind === "ol") taLinePrefix(ta, "1. ");
+    else if (kind === "h") taLinePrefix(ta, "## ");
+    else if (kind === "hr") taInsert(ta, "\n---\n");
+  }
+
+  /* ---------- tags ---------- */
+  function normTag(s) { return String(s).toLowerCase().replace(/,/g, " ").trim().replace(/\s+/g, " "); }
+  function allTags() { var set = {}; state.entries.forEach(function (e) { (e.tags || []).forEach(function (t) { set[t] = 1; }); }); return Object.keys(set).sort(); }
+  var modalTags = [];
+  function renderModalTags() {
+    var box = document.getElementById("mTagChips"); box.innerHTML = "";
+    modalTags.forEach(function (t, i) {
+      var chip = el("span", "tag-edit", t);
+      var x = el("button", null, "\u00d7"); x.type = "button";
+      x.addEventListener("click", function () { modalTags.splice(i, 1); renderModalTags(); });
+      chip.appendChild(x); box.appendChild(chip);
+    });
+    var sug = document.getElementById("mTagSuggest"); sug.innerHTML = "";
+    var others = allTags().filter(function (t) { return modalTags.indexOf(t) === -1; });
+    if (others.length) {
+      sug.appendChild(el("div", "tag-suggest-label", "Your tags, tap to add"));
+      others.forEach(function (t) { var s = el("button", "s", t); s.type = "button"; s.addEventListener("click", function () { modalTags.push(t); renderModalTags(); }); sug.appendChild(s); });
+    }
+  }
+  function addModalTagFromInput() {
+    var inp = document.getElementById("mTagInput"); var t = normTag(inp.value);
+    if (t && modalTags.indexOf(t) === -1) modalTags.push(t);
+    inp.value = ""; renderModalTags();
+  }
+  function setTagFilter(t) { tagFilter = t; render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function clearTagFilter() { tagFilter = null; render(); }
+  function renderTagFilter() {
+    var wrap = document.getElementById("tagFilterWrap"); wrap.innerHTML = "";
+    if (!tagFilter) return;
+    var chip = el("span", "tagfilter", "Tagged: " + tagFilter);
+    var x = el("button", null, "\u00d7"); x.type = "button";
+    x.addEventListener("click", clearTagFilter); chip.appendChild(x); wrap.appendChild(chip);
+  }
+
   /* ---------- render ---------- */
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
 
-  function render() { renderNav(); renderHead(); renderList(); renderStats(); }
+  function render() { renderNav(); renderHead(); renderTagFilter(); renderList(); renderStats(); }
 
   function renderNav() {
     document.querySelectorAll(".nav-btn[data-view]").forEach(function (b) { b.classList.toggle("active", b.dataset.view === view); });
@@ -658,6 +788,8 @@
     else if (e.type === "idea") meta.appendChild(el("span", "caller-tag", "Idea"));
     var due = fmtDue(e.due); if (due && !e.done) meta.appendChild(el("span", "meta-txt" + (due.over ? " over" : ""), due.txt));
     if (e.done) meta.appendChild(el("span", "meta-txt", "Completed " + fmtDateShort(e.updated)));
+    else meta.appendChild(el("span", "meta-txt", "Added " + fmtDateShort(e.created)));
+    (e.tags || []).forEach(function (tg) { var tc = el("span", "tag-chip", tg); tc.addEventListener("click", function (ev) { ev.stopPropagation(); setTagFilter(tg); }); meta.appendChild(tc); });
     body.appendChild(meta);
     body.addEventListener("click", function () { openIds[e.id] = !openIds[e.id]; render(); });
     row.appendChild(body);
@@ -671,7 +803,7 @@
     chev.addEventListener("click", function (ev) { ev.stopPropagation(); openIds[e.id] = !openIds[e.id]; render(); });
     actions.appendChild(chev); row.appendChild(actions); wrap.appendChild(row);
     var detail = el("div", "entry-detail");
-    if (e.details && e.details.trim()) detail.appendChild(el("div", "det-text", e.details));
+    if (e.details && e.details.trim()) { var dt = el("div", "det-text"); dt.innerHTML = renderMarkdown(e.details); detail.appendChild(dt); }
     else detail.appendChild(el("div", "det-empty", "No extra detail yet. Hit edit to expand on this."));
     if (e.due) {
       var cal = el("button", "cal-btn");
@@ -728,6 +860,8 @@
     document.getElementById("mType").value = e.type;
     document.getElementById("mDue").value = e.due || "";
     document.getElementById("mCaller").value = e.caller || "";
+    modalTags = (e.tags || []).slice();
+    renderModalTags();
     toggleCaller(e.type);
     document.getElementById("scrim").classList.add("show");
     document.getElementById("mTitle").focus();
@@ -741,7 +875,7 @@
     e.title = title; e.details = document.getElementById("mDetails").value;
     e.category = document.getElementById("mCat").value; e.priority = document.getElementById("mPri").value;
     e.type = document.getElementById("mType").value; e.due = document.getElementById("mDue").value;
-    e.caller = document.getElementById("mCaller").value; e.updated = Date.now();
+    e.caller = document.getElementById("mCaller").value; e.tags = modalTags.slice(); e.updated = Date.now();
     dirtyEntry(e.id); persist(); closeModal(); render(); toast("Saved");
   }
 
@@ -787,7 +921,8 @@
       var col = document.createElement("input"); col.type = "color"; col.value = c.color || "#0d9488";
       col.addEventListener("input", function () { catDraft[i].color = col.value; });
       var name = document.createElement("input"); name.type = "text"; name.className = "cat-name"; name.value = c.label; name.placeholder = "Category name";
-      name.addEventListener("input", function () { catDraft[i].label = name.value; });
+      var tag = el("span", "cat-tag", "#" + (catSlug(c.label) || "tag"));
+      name.addEventListener("input", function () { catDraft[i].label = name.value; tag.textContent = "#" + (catSlug(name.value) || "tag"); });
       var del = el("button", "cat-del", "\u00d7"); del.title = "Remove"; del.type = "button";
       del.addEventListener("click", function () {
         var inUse = state.entries.some(function (e) { return e.category === c.id; });
@@ -795,7 +930,7 @@
         if (catDraft.length <= 1) { toast("Keep at least one category."); return; }
         catDraft.splice(i, 1); renderCatRows();
       });
-      row.appendChild(col); row.appendChild(name); row.appendChild(del);
+      row.appendChild(col); row.appendChild(name); row.appendChild(tag); row.appendChild(del);
       box.appendChild(row);
     });
   }
@@ -891,7 +1026,12 @@
 
   /* ---------- smart quick-add ---------- */
   function catSlug(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
-  function matchCatTag(key) { for (var i = 0; i < categories.length; i++) { var c = categories[i]; if (key === catSlug(c.id) || key === catSlug(c.label)) return c.id; } return null; }
+  function matchCatTag(key) {
+    for (var i = 0; i < categories.length; i++) { var c = categories[i]; if (key === catSlug(c.id) || key === catSlug(c.label)) return c.id; }
+    var hits = [];
+    for (var j = 0; j < categories.length; j++) { var d = categories[j]; if (key.length >= 2 && (catSlug(d.label).indexOf(key) === 0 || catSlug(d.id).indexOf(key) === 0)) hits.push(d.id); }
+    return hits.length === 1 ? hits[0] : null;
+  }
   var DOW = { sun: 0, mon: 1, tue: 2, tues: 2, wed: 3, thu: 4, thur: 4, thurs: 4, fri: 5, sat: 6 };
   function dateAhead(days) { var d = new Date(); d.setDate(d.getDate() + days); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   function nextDow(target) { var diff = (target - new Date().getDay() + 7) % 7; return dateAhead(diff); }
@@ -1035,6 +1175,9 @@
     document.getElementById("mCancel").addEventListener("click", closeModal);
     document.getElementById("mDelete").addEventListener("click", function () { if (editingId && confirm("Delete this entry for good?")) { delEntry(editingId); closeModal(); render(); toast("Deleted"); } });
     document.getElementById("mType").addEventListener("change", function (ev) { toggleCaller(ev.target.value); });
+    document.querySelectorAll(".md-bar button").forEach(function (b) { b.addEventListener("click", function () { mdAction(b.dataset.md); }); });
+    document.getElementById("mTagInput").addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === ",") { ev.preventDefault(); addModalTagFromInput(); } });
+    document.getElementById("mTagInput").addEventListener("blur", addModalTagFromInput);
     document.getElementById("scrim").addEventListener("click", function (ev) { if (ev.target.id === "scrim") closeModal(); });
     document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeModal(); });
     document.getElementById("dayNote").addEventListener("input", function (ev) { state.notes[todayKey()] = ev.target.value; dirtyNote(todayKey()); persist(); });
