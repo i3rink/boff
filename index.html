@@ -190,6 +190,14 @@
 
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--paper); padding: 12px 20px; border-radius: 10px; font-size: 14px; box-shadow: var(--shadow-lift); opacity: 0; pointer-events: none; transition: .25s; z-index: 60; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .cat-row input[type=color] { width: 36px; height: 36px; padding: 0; border: 1px solid var(--line-strong); border-radius: 9px; background: none; cursor: pointer; flex: none; }
+  .cat-row .cat-name { flex: 1; border: 1px solid var(--line-strong); background: var(--paper); border-radius: 9px; padding: 9px 12px; font: inherit; font-size: 14.5px; color: var(--ink); }
+  .cat-row .cat-name:focus { outline: none; border-color: var(--accent); }
+  .cat-del { border: none; background: transparent; color: var(--ink-faint); font-size: 22px; line-height: 1; cursor: pointer; padding: 2px 9px; border-radius: 7px; flex: none; }
+  .cat-del:hover { background: rgba(182,73,42,.08); color: var(--accent); }
+  #catAddBtn { width: 100%; margin-top: 6px; border-style: dashed; color: var(--ink-soft); }
+
   .menu-toggle { display: none; }
 
   /* Auth */
@@ -285,6 +293,7 @@
         <button class="io-btn" id="printBtn">Print</button>
         <button class="io-btn" id="signOutBtn">Sign out</button>
       </div>
+      <button class="io-btn" id="catEditBtn">Edit categories</button>
       <button class="io-btn" id="privacyBtn">Hide categories</button>
       <button class="io-btn" id="remindBtn">Turn on reminders</button>
       <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
@@ -322,6 +331,7 @@
         <input id="searchInput" placeholder="Search titles and details" autocomplete="off">
       </div>
       <select id="sortSel"><option value="priority">Sort by priority</option><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="due">By due date</option><option value="category">By category</option></select>
+      <select id="periodSel" style="display:none"><option value="all">All time</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="thismonth">This month</option><option value="lastmonth">Last month</option><option value="thisyear">This year</option></select>
     </div>
 
     <div id="list"></div>
@@ -348,6 +358,21 @@
       <button class="btn danger del" id="mDelete">Delete</button>
       <button class="btn" id="mCancel">Cancel</button>
       <button class="btn primary" id="mSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="catScrim">
+  <div class="modal">
+    <div class="modal-head"><h3>Categories</h3></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:4px;">Rename, recolour, add or remove. A category with tasks in it can't be removed until those tasks are moved.</p>
+      <div id="catList"></div>
+      <button class="btn" id="catAddBtn">+ Add category</button>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="catCancelBtn">Cancel</button>
+      <button class="btn primary" id="catSaveBtn">Save</button>
     </div>
   </div>
 </div>
@@ -380,19 +405,25 @@
   var sb = makeClient(curRemember);
   var user = null;
 
-  var CATS = [
-    { id: "annick", label: "Annick", color: "var(--cat-annick)" },
-    { id: "atf", label: "ATF", color: "var(--cat-atf)" },
-    { id: "pnw", label: "Personal Non Work", color: "var(--cat-pnw)" },
-    { id: "pw", label: "Personal Work", color: "var(--cat-pw)" },
-    { id: "ideas", label: "Ideas", color: "var(--cat-ideas)" },
-    { id: "kb", label: "Knowledge Bank", color: "var(--cat-kb)" }
+  var DEFAULT_CATS = [
+    { id: "annick", label: "Annick", color: "#e0992b" },
+    { id: "atf", label: "ATF", color: "#3b82f6" },
+    { id: "pnw", label: "Personal Non Work", color: "#22a06b" },
+    { id: "pw", label: "Personal Work", color: "#d6457a" },
+    { id: "ideas", label: "Ideas", color: "#f0683c" },
+    { id: "kb", label: "Knowledge Bank", color: "#7c6cf0" }
   ];
+  var CATKEY = "boff.categories";
+  function loadCategoriesLocal() { try { var r = localStorage.getItem(CATKEY); if (r) { var a = JSON.parse(r); if (Array.isArray(a) && a.length) return a; } } catch (e) {} return null; }
+  function saveCategoriesLocal() { try { localStorage.setItem(CATKEY, JSON.stringify(categories)); } catch (e) {} }
+  var categories = loadCategoriesLocal() || DEFAULT_CATS.map(function (c) { return { id: c.id, label: c.label, color: c.color }; });
+  var CAT_PALETTE = ["#e0992b", "#3b82f6", "#22a06b", "#d6457a", "#f0683c", "#7c6cf0", "#0d9488", "#ef4444", "#0ea5e9", "#a855f7", "#65a30d", "#db2777"];
+  function randomCatColor() { return CAT_PALETTE[Math.floor(Math.random() * CAT_PALETTE.length)]; }
   var PRI_RANK = { high: 0, medium: 1, low: 2 };
   var PRI_LABEL = { high: "High", medium: "Medium", low: "Low" };
 
   var state = { entries: [], notes: {} };
-  var view = "todo", search = "", sort = "priority", openIds = {}, editingId = null;
+  var view = "todo", search = "", sort = "priority", period = "all", openIds = {}, editingId = null;
 
   var LKEY = "boff.cache.v1", PKEY = "boff.pending.v1";
   var pending = { entries: {}, notes: {}, deletes: {} };
@@ -411,7 +442,8 @@
   function persist() { saveLocal(); scheduleSync(); }
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
-  function catOf(id) { for (var i = 0; i < CATS.length; i++) if (CATS[i].id === id) return CATS[i]; return CATS[0]; }
+  function catOf(id) { for (var i = 0; i < categories.length; i++) if (categories[i].id === id) return categories[i]; return categories[0]; }
+  function catById(id) { for (var i = 0; i < categories.length; i++) if (categories[i].id === id) return categories[i]; return null; }
   function todayKey() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 
   function fmtDue(s) {
@@ -425,7 +457,24 @@
     return { txt: "Due " + label, over: false };
   }
 
-  function fillCatSelect(sel) { sel.innerHTML = ""; for (var i = 0; i < CATS.length; i++) { var o = document.createElement("option"); o.value = CATS[i].id; o.textContent = CATS[i].label; sel.appendChild(o); } }
+  function fmtDateShort(ts) {
+    var d = new Date(ts), now = new Date();
+    var opts = { day: "numeric", month: "short" };
+    if (d.getFullYear() !== now.getFullYear()) opts.year = "numeric";
+    return d.toLocaleDateString("en-GB", opts);
+  }
+  function inPeriod(ts) {
+    if (period === "all") return true;
+    var now = new Date();
+    if (period === "7d") return ts >= Date.now() - 7 * 86400000;
+    if (period === "30d") return ts >= Date.now() - 30 * 86400000;
+    if (period === "thismonth") return ts >= new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    if (period === "lastmonth") { var s = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime(), e = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); return ts >= s && ts < e; }
+    if (period === "thisyear") return ts >= new Date(now.getFullYear(), 0, 1).getTime();
+    return true;
+  }
+
+  function fillCatSelect(sel) { var cur = sel.value; sel.innerHTML = ""; for (var i = 0; i < categories.length; i++) { var o = document.createElement("option"); o.value = categories[i].id; o.textContent = categories[i].label; sel.appendChild(o); } if (cur) sel.value = cur; }
 
   /* ---------- CRUD ---------- */
   function addEntry(title, cat, pri, type) {
@@ -499,13 +548,14 @@
     var q = search.trim().toLowerCase();
     if (q) arr = arr.filter(function (e) { return (e.title + " " + e.details + " " + (e.caller || "")).toLowerCase().indexOf(q) > -1; });
     if (view === "todo") arr = arr.filter(function (e) { return !e.done; });
-    else if (view === "done") arr = arr.filter(function (e) { return e.done; });
+    else if (view === "done") arr = arr.filter(function (e) { return e.done && inPeriod(e.updated); });
     else if (view === "calls") arr = arr.filter(function (e) { return e.type === "call"; });
     else if (view === "today") { var tk = todayKey(); arr = arr.filter(function (e) { return !e.done && e.due && e.due <= tk; }); }
-    else if (view.indexOf("cat:") === 0) { var cid = view.slice(4); arr = arr.filter(function (e) { return e.category === cid; }); }
+    else if (view.indexOf("cat:") === 0) { var cid = view.slice(4); arr = arr.filter(function (e) { return e.category === cid && !e.done; }); }
     return sortEntries(arr);
   }
   function sortEntries(arr) {
+    if (view === "done") { arr.sort(function (a, b) { return sort === "oldest" ? a.updated - b.updated : b.updated - a.updated; }); return arr; }
     var s = (view === "todo" || view === "today") ? "priority" : sort;
     arr.sort(function (a, b) {
       if (s === "priority") {
@@ -537,7 +587,7 @@
     var tk = todayKey();
     document.getElementById("c-today").textContent = state.entries.filter(function (e) { return !e.done && e.due && e.due <= tk; }).length || "";
     var nav = document.getElementById("catNav"); nav.innerHTML = "";
-    CATS.forEach(function (c) {
+    categories.forEach(function (c) {
       var n = state.entries.filter(function (e) { return e.category === c.id && !e.done; }).length;
       var b = el("button", "nav-btn"); b.dataset.view = "cat:" + c.id; if (view === "cat:" + c.id) b.classList.add("active");
       var sw = el("span", "swatch"); sw.style.background = c.color; b.appendChild(sw);
@@ -553,6 +603,7 @@
     document.getElementById("viewTitle").textContent = t[0];
     document.getElementById("viewSub").textContent = t[1];
     document.getElementById("noteCard").style.display = (view === "today" || view === "todo") ? "" : "none";
+    document.getElementById("periodSel").style.display = (view === "done") ? "" : "none";
   }
   function renderList() {
     var list = document.getElementById("list"); list.innerHTML = "";
@@ -565,6 +616,22 @@
         em.appendChild(el("p", null, search ? "Nothing matches that search." : "Nothing here yet. Add your first action point above."));
         list.appendChild(em);
       }
+      return;
+    }
+    if (view === "done") {
+      var curKey = null;
+      entries.forEach(function (e) {
+        var d = new Date(e.updated);
+        var key = d.getFullYear() + "-" + d.getMonth();
+        if (key !== curKey) {
+          curKey = key;
+          var g = el("div", "group-label");
+          g.appendChild(el("span", null, d.toLocaleDateString("en-GB", { month: "long", year: "numeric" })));
+          g.appendChild(el("span", "ln"));
+          list.appendChild(g);
+        }
+        list.appendChild(entryNode(e));
+      });
       return;
     }
     if (view === "todo" && sort === "priority") {
@@ -590,6 +657,7 @@
     if (e.type === "call") meta.appendChild(el("span", "caller-tag", e.caller ? "Call: " + e.caller : "Call note"));
     else if (e.type === "idea") meta.appendChild(el("span", "caller-tag", "Idea"));
     var due = fmtDue(e.due); if (due && !e.done) meta.appendChild(el("span", "meta-txt" + (due.over ? " over" : ""), due.txt));
+    if (e.done) meta.appendChild(el("span", "meta-txt", "Completed " + fmtDateShort(e.updated)));
     body.appendChild(meta);
     body.addEventListener("click", function () { openIds[e.id] = !openIds[e.id]; render(); });
     row.appendChild(body);
@@ -704,6 +772,72 @@
 
   function loadDayNote() { document.getElementById("dayNote").value = state.notes[todayKey()] || ""; }
 
+  /* ---------- category manager ---------- */
+  var catDraft = [];
+  function openCatManager() {
+    catDraft = categories.map(function (c) { return { id: c.id, label: c.label, color: c.color }; });
+    renderCatRows();
+    document.getElementById("catScrim").classList.add("show");
+  }
+  function closeCatManager() { document.getElementById("catScrim").classList.remove("show"); }
+  function renderCatRows() {
+    var box = document.getElementById("catList"); box.innerHTML = "";
+    catDraft.forEach(function (c, i) {
+      var row = el("div", "cat-row");
+      var col = document.createElement("input"); col.type = "color"; col.value = c.color || "#0d9488";
+      col.addEventListener("input", function () { catDraft[i].color = col.value; });
+      var name = document.createElement("input"); name.type = "text"; name.className = "cat-name"; name.value = c.label; name.placeholder = "Category name";
+      name.addEventListener("input", function () { catDraft[i].label = name.value; });
+      var del = el("button", "cat-del", "\u00d7"); del.title = "Remove"; del.type = "button";
+      del.addEventListener("click", function () {
+        var inUse = state.entries.some(function (e) { return e.category === c.id; });
+        if (inUse) { toast("That category has tasks in it. Move them first."); return; }
+        if (catDraft.length <= 1) { toast("Keep at least one category."); return; }
+        catDraft.splice(i, 1); renderCatRows();
+      });
+      row.appendChild(col); row.appendChild(name); row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+  function addCatRow() { catDraft.push({ id: "c_" + uid(), label: "", color: randomCatColor() }); renderCatRows(); }
+  function saveCatManager() {
+    for (var i = 0; i < catDraft.length; i++) { if (!catDraft[i].label.trim()) { toast("Give every category a name."); return; } }
+    categories = catDraft.map(function (c) { return { id: c.id, label: c.label.trim(), color: c.color }; });
+    saveCategoriesLocal();
+    pushCategories();
+    fillCatSelect(document.getElementById("qCat"));
+    fillCatSelect(document.getElementById("mCat"));
+    render(); closeCatManager(); toast("Categories updated");
+  }
+
+  function pushCategories() {
+    if (!sb || !user) return Promise.resolve();
+    var rows = categories.map(function (c, i) { return { user_id: user.id, id: c.id, label: c.label, color: c.color, position: i }; });
+    return sb.from("categories").upsert(rows, { onConflict: "user_id,id" }).then(function (r) {
+      if (r.error) throw r.error;
+      var ids = categories.map(function (c) { return c.id; });
+      return sb.from("categories").select("id").then(function (g) {
+        if (g.error) return;
+        var toDel = (g.data || []).filter(function (row) { return ids.indexOf(row.id) === -1; }).map(function (row) { return row.id; });
+        if (toDel.length) return sb.from("categories").delete().eq("user_id", user.id).in("id", toDel);
+      });
+    }).catch(function () {});
+  }
+  function loadCategoriesCloud() {
+    if (!sb || !user) return Promise.resolve();
+    return sb.from("categories").select("*").order("position").then(function (r) {
+      if (r.error) throw r.error;
+      var rows = r.data || [];
+      if (rows.length) {
+        categories = rows.map(function (x) { return { id: x.id, label: x.label, color: x.color }; });
+        saveCategoriesLocal();
+        fillCatSelect(document.getElementById("qCat"));
+        fillCatSelect(document.getElementById("mCat"));
+        render();
+      } else { pushCategories(); }
+    }).catch(function () {});
+  }
+
   var toastTimer;
   function toast(msg) { var t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2200); }
 
@@ -747,16 +881,17 @@
     if (!sb) return;
     sb.auth.getSession().then(function (s) {
       user = (s && s.data && s.data.session) ? s.data.session.user : null;
-      if (user) { showApp(); syncNow(); } else { showAuth(); setSync("", "Signed out"); }
+      if (user) { showApp(); loadCategoriesCloud(); syncNow(); } else { showAuth(); setSync("", "Signed out"); }
     });
     sb.auth.onAuthStateChange(function (_evt, session) {
       user = session ? session.user : null;
-      if (user) { showApp(); syncNow(); } else { showAuth(); setSync("", "Signed out"); }
+      if (user) { showApp(); loadCategoriesCloud(); syncNow(); } else { showAuth(); setSync("", "Signed out"); }
     });
   }
 
   /* ---------- smart quick-add ---------- */
-  var CAT_WORDS = { annick: "annick", atf: "atf", pw: "pw", pnw: "pnw", ideas: "ideas", idea: "ideas", kb: "kb", knowledge: "kb" };
+  function catSlug(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+  function matchCatTag(key) { for (var i = 0; i < categories.length; i++) { var c = categories[i]; if (key === catSlug(c.id) || key === catSlug(c.label)) return c.id; } return null; }
   var DOW = { sun: 0, mon: 1, tue: 2, tues: 2, wed: 3, thu: 4, thur: 4, thurs: 4, fri: 5, sat: 6 };
   function dateAhead(days) { var d = new Date(); d.setDate(d.getDate() + days); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   function nextDow(target) { var diff = (target - new Date().getDay() + 7) % 7; return dateAhead(diff); }
@@ -765,14 +900,14 @@
     var text = " " + raw + " ";
     var pm = text.match(/\s!(high|hi|h|medium|med|m|low|lo|l|1|2|3)\b/i);
     if (pm) { var p = pm[1].toLowerCase(); out.priority = (p.charAt(0) === "h" || p === "1") ? "high" : (p.charAt(0) === "l" || p === "3") ? "low" : "medium"; text = text.replace(pm[0], " "); }
-    Object.keys(CAT_WORDS).forEach(function (w) { if ((w === "annick" || w === "atf") && new RegExp("\\b" + w + "\\b", "i").test(text)) out.category = CAT_WORDS[w]; });
     if (/\bcall(ed|ing)?\b/i.test(text)) out.type = "call";
-    var tags = text.match(/#[a-z]+/ig) || [];
+    var tags = text.match(/#[a-z0-9]+/ig) || [];
     tags.forEach(function (tg) {
       var key = tg.slice(1).toLowerCase();
-      if (key === "call") { out.type = "call"; text = text.replace(new RegExp(tg, "i"), " "); }
-      else if (key === "idea") { out.type = "idea"; out.category = "ideas"; text = text.replace(new RegExp(tg, "i"), " "); }
-      else if (CAT_WORDS[key]) { out.category = CAT_WORDS[key]; text = text.replace(new RegExp(tg, "i"), " "); }
+      if (key === "call") { out.type = "call"; text = text.replace(new RegExp(tg, "i"), " "); return; }
+      if (key === "idea") { out.type = "idea"; var ic = catById("ideas"); if (ic) out.category = ic.id; text = text.replace(new RegExp(tg, "i"), " "); return; }
+      var m = matchCatTag(key);
+      if (m) { out.category = m; text = text.replace(new RegExp(tg, "i"), " "); }
     });
     if (/\btoday\b/i.test(text)) { out.due = dateAhead(0); text = text.replace(/\btoday\b/i, " "); }
     else if (/\btomorrow\b|\btom\b/i.test(text)) { out.due = dateAhead(1); text = text.replace(/\btomorrow\b|\btom\b/i, " "); }
@@ -895,6 +1030,7 @@
     document.getElementById("qTitle").addEventListener("keydown", function (ev) { if (ev.key === "Enter") quickAdd(); });
     document.getElementById("searchInput").addEventListener("input", function (ev) { search = ev.target.value; render(); });
     document.getElementById("sortSel").addEventListener("change", function (ev) { sort = ev.target.value; render(); });
+    document.getElementById("periodSel").addEventListener("change", function (ev) { period = ev.target.value; render(); });
     document.getElementById("mSave").addEventListener("click", saveModal);
     document.getElementById("mCancel").addEventListener("click", closeModal);
     document.getElementById("mDelete").addEventListener("click", function () { if (editingId && confirm("Delete this entry for good?")) { delEntry(editingId); closeModal(); render(); toast("Deleted"); } });
@@ -914,6 +1050,11 @@
     } else { qMic.style.display = "none"; mMic.style.display = "none"; }
     document.getElementById("catToggle").addEventListener("click", toggleCatCollapse);
     document.getElementById("privacyBtn").addEventListener("click", togglePrivacy);
+    document.getElementById("catEditBtn").addEventListener("click", openCatManager);
+    document.getElementById("catAddBtn").addEventListener("click", addCatRow);
+    document.getElementById("catCancelBtn").addEventListener("click", closeCatManager);
+    document.getElementById("catSaveBtn").addEventListener("click", saveCatManager);
+    document.getElementById("catScrim").addEventListener("click", function (ev) { if (ev.target.id === "catScrim") closeCatManager(); });
     updateRemindBtn();
     applyPrivacy();
     applyCatCollapse();
