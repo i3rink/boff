@@ -46,6 +46,10 @@
   .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); margin-bottom: 4px; }
   .brand small { display:block; color: var(--ink-faint); font-size: 11px; letter-spacing:.14em; text-transform: uppercase; padding: 6px 8px 14px; }
   .nav-label { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-faint); padding: 16px 10px 6px; }
+  .cat-toggle { background: transparent; border: none; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: space-between; font-family: inherit; }
+  .cat-toggle:hover { color: var(--ink-soft); }
+  .cat-chev { width: 12px; height: 12px; transition: transform .2s; opacity: .65; }
+  .cat-toggle.collapsed .cat-chev { transform: rotate(-90deg); }
   .nav-btn { display: flex; align-items: center; gap: 10px; width: 100%; border: none; background: transparent; cursor: pointer; font: inherit; font-size: 14.5px; color: var(--ink-soft); padding: 9px 10px; border-radius: 9px; text-align: left; transition: background .15s, color .15s; }
   .nav-btn:hover { background: rgba(43,39,34,.05); color: var(--ink); }
   .nav-btn.active { background: var(--ink); color: var(--paper); }
@@ -65,6 +69,8 @@
   .io-row { display: flex; gap: 8px; }
   .io-btn { flex: 1; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); border-radius: 9px; padding: 8px; font: inherit; font-size: 12.5px; cursor: pointer; transition: .15s; }
   .io-btn:hover { background: var(--paper); border-color: var(--ink-soft); }
+  .io-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .io-btn.on:hover { background: #0b7d73; border-color: #0b7d73; }
 
   .main { padding: 30px 38px 80px; max-width: 980px; }
   .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 22px; flex-wrap: wrap; }
@@ -141,6 +147,7 @@
   .entry-meta { display: flex; gap: 7px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
   .badge { font-size: 11px; font-weight: 600; padding: 2.5px 8px; border-radius: 20px; letter-spacing: .02em; }
   .cat-badge { color: #fff; }
+  body.privacy .cat-badge { display: inline-block; width: 10px; height: 10px; padding: 0; font-size: 0; border-radius: 50%; vertical-align: middle; }
   .pri-badge { background: transparent; border: 1px solid; }
   .pri-high { color: var(--p-high); border-color: var(--p-high); } .pri-medium { color: var(--p-med); border-color: var(--p-med); } .pri-low { color: var(--p-low); border-color: var(--p-low); }
   .meta-txt { font-size: 11.5px; color: var(--ink-faint); }
@@ -211,6 +218,7 @@
     .menu-toggle { display: inline-grid; place-items: center; position: fixed; top: 14px; right: 14px; z-index: 45; width: 42px; height: 42px; border-radius: 11px; border: 1px solid var(--line); background: var(--card); cursor: pointer; box-shadow: var(--shadow); }
     .head .title h2 { font-size: 27px; }
     .field-grid { grid-template-columns: 1fr; }
+    .mic { display: none !important; }
   }
   @media print {
     .side, .quick, .toolbar, .menu-toggle, .entry-actions, .check, .note-card textarea { display: none !important; }
@@ -258,7 +266,7 @@
     <button class="nav-btn" data-view="calls"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call log <span class="count" id="c-calls"></span></button>
     <button class="nav-btn" data-view="done"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Completed <span class="count" id="c-done"></span></button>
 
-    <div class="nav-label">Categories</div>
+    <button class="nav-label cat-toggle" id="catToggle" type="button">Categories <svg class="cat-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
     <div id="catNav"></div>
 
     <div class="side-foot">
@@ -277,6 +285,7 @@
         <button class="io-btn" id="printBtn">Print</button>
         <button class="io-btn" id="signOutBtn">Sign out</button>
       </div>
+      <button class="io-btn" id="privacyBtn">Hide categories</button>
       <button class="io-btn" id="remindBtn">Turn on reminders</button>
       <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
     </div>
@@ -290,11 +299,11 @@
 
     <div class="quick">
       <div class="quick-top">
-        <input class="title" id="qTitle" placeholder="Add a job. Try: ring Annick re invoice #atf !high tomorrow" autocomplete="off">
+        <input class="title" id="qTitle" placeholder="Add a job. Try: chase the invoice !high tomorrow" autocomplete="off">
         <button class="mic" id="qMic" type="button" title="Dictate" aria-label="Dictate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></button>
         <button class="add-btn" id="qAdd">Add</button>
       </div>
-      <div class="quick-hint" id="quickHint">Tip: drop in <b>#atf #annick #pw #pnw #ideas #kb</b>, a <b>!high !med !low</b> flag, a <b>#call</b>, or <b>today tomorrow fri</b> and BOFF files it for you.</div>
+      <div class="quick-hint" id="quickHint">Tip: drop in <b>#pw #pnw #ideas #kb</b>, a <b>!high !med !low</b> flag, a <b>#call</b>, or <b>today tomorrow fri</b> and BOFF files it for you.</div>
       <div class="quick-opts">
         <select id="qCat"></select>
         <select id="qPri"><option value="high">High priority</option><option value="medium" selected>Medium priority</option><option value="low">Low priority</option></select>
@@ -614,6 +623,33 @@
 
   function setView(v) { view = v; document.getElementById("side").classList.remove("open"); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
 
+  var CCKEY = "boff.catcollapsed";
+  var catCollapsed = false;
+  try { catCollapsed = localStorage.getItem(CCKEY) === "1"; } catch (e) {}
+  function applyCatCollapse() {
+    var nav = document.getElementById("catNav"), btn = document.getElementById("catToggle");
+    if (!nav || !btn) return;
+    nav.style.display = catCollapsed ? "none" : "";
+    btn.classList.toggle("collapsed", catCollapsed);
+  }
+  function toggleCatCollapse() { catCollapsed = !catCollapsed; try { localStorage.setItem(CCKEY, catCollapsed ? "1" : "0"); } catch (e) {} applyCatCollapse(); }
+
+  var PRIVKEY = "boff.privacy";
+  var privacy = false;
+  try { privacy = localStorage.getItem(PRIVKEY) === "1"; } catch (e) {}
+  if (privacy) catCollapsed = true;
+  function applyPrivacy() {
+    document.body.classList.toggle("privacy", privacy);
+    var b = document.getElementById("privacyBtn");
+    if (b) { b.classList.toggle("on", privacy); b.textContent = privacy ? "Categories hidden" : "Hide categories"; }
+  }
+  function togglePrivacy() {
+    privacy = !privacy;
+    catCollapsed = privacy;
+    try { localStorage.setItem(PRIVKEY, privacy ? "1" : "0"); localStorage.setItem(CCKEY, catCollapsed ? "1" : "0"); } catch (e) {}
+    applyPrivacy(); applyCatCollapse();
+  }
+
   /* ---------- modal ---------- */
   function openModal(id) {
     editingId = id; var e = getEntry(id); if (!e) return;
@@ -876,7 +912,11 @@
       qMic.addEventListener("click", function () { startDictation(document.getElementById("qTitle"), qMic); });
       mMic.addEventListener("click", function () { startDictation(document.getElementById("mDetails"), mMic); });
     } else { qMic.style.display = "none"; mMic.style.display = "none"; }
+    document.getElementById("catToggle").addEventListener("click", toggleCatCollapse);
+    document.getElementById("privacyBtn").addEventListener("click", togglePrivacy);
     updateRemindBtn();
+    applyPrivacy();
+    applyCatCollapse();
     document.getElementById("signOutBtn").addEventListener("click", doSignOut);
     document.getElementById("menuToggle").addEventListener("click", function () { document.getElementById("side").classList.toggle("open"); });
     document.getElementById("signInBtn").addEventListener("click", doSignIn);
