@@ -1,5 +1,5 @@
-/* BOFF service worker - caches the app shell so it opens offline. */
-var CACHE = "boff-shell-v1";
+/* BOFF service worker. Always serves the freshest app page when online, caches the shell for offline. */
+var CACHE = "boff-shell-v3";
 var SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", function (e) {
@@ -16,11 +16,25 @@ self.addEventListener("activate", function (e) {
 self.addEventListener("fetch", function (e) {
   var req = e.request;
   var url = req.url;
-  /* Never cache Supabase, fonts, or the Supabase library. Always go to the network. */
+  /* Never touch Supabase, fonts, or the Supabase library. Always go straight to the network. */
   if (req.method !== "GET" || url.indexOf("supabase.co") > -1 || url.indexOf("supabase.in") > -1 || url.indexOf("jsdelivr.net") > -1 || url.indexOf("fonts.g") > -1) {
-    return; /* let the browser handle it normally */
+    return;
   }
-  /* App shell: serve from cache first, fall back to network, then to index for navigations. */
+  var isPage = req.mode === "navigate" || url.indexOf("index.html") > -1;
+  if (isPage) {
+    /* Pull the page fresh from the server every time, bypassing the browser HTTP cache. Fall back to cache only when offline. */
+    e.respondWith(
+      fetch(req.url, { cache: "no-store", credentials: "same-origin" }).then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { c.put("./index.html", copy); });
+        return res;
+      }).catch(function () {
+        return caches.match("./index.html").then(function (hit) { return hit || caches.match("./"); });
+      })
+    );
+    return;
+  }
+  /* Cache first for the steady stuff (icons, manifest). */
   e.respondWith(
     caches.match(req).then(function (hit) {
       return hit || fetch(req).then(function (res) {
@@ -29,8 +43,6 @@ self.addEventListener("fetch", function (e) {
           caches.open(CACHE).then(function (c) { c.put(req, copy); });
         }
         return res;
-      }).catch(function () {
-        if (req.mode === "navigate") return caches.match("./index.html");
       });
     })
   );
