@@ -99,7 +99,7 @@
 
   .note-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 18px; margin-bottom: 24px; }
   .note-card h3 { font-family: "Bricolage Grotesque", sans-serif; font-size: 17px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-  .note-card textarea { width: 100%; border: none; background: transparent; resize: vertical; min-height: 64px; font: inherit; font-size: 14.5px; color: var(--ink); line-height: 1.6; }
+  .note-card textarea { width: 100%; border: none; background: transparent; resize: vertical; min-height: 120px; font: inherit; font-size: 14.5px; color: var(--ink); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
   .note-card textarea:focus { outline: none; }
   .note-card textarea::placeholder { color: var(--ink-faint); }
 
@@ -178,6 +178,29 @@
   .att-chip:hover { border-color: var(--accent); color: var(--accent); }
   .att-chip .att-ic svg, .att-count svg { width: 13px; height: 13px; display: block; }
   .att-count { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; color: var(--ink-faint); }
+  .search-block { margin-bottom: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .search-head { font-size: 12px; color: var(--ink-faint); letter-spacing: .3px; text-transform: uppercase; }
+  .match-row { display: flex; align-items: flex-start; gap: 10px; text-align: left; width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; cursor: pointer; }
+  .match-row:hover { border-color: var(--accent); }
+  .match-kind { flex: none; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--paper); background: var(--accent); border-radius: 6px; padding: 3px 7px; margin-top: 1px; }
+  .match-kind.note { background: var(--ink-soft); }
+  .match-main { min-width: 0; }
+  .match-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .match-snip { font-size: 12.5px; color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vault-top { margin-bottom: 16px; }
+  .vault-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 14px 16px; margin-bottom: 12px; }
+  .vault-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .vault-label { font-family: "Bricolage Grotesque", sans-serif; font-size: 16px; font-weight: 600; color: var(--ink); word-break: break-word; }
+  .vault-edit { border: none; background: transparent; color: var(--ink-faint); cursor: pointer; font-size: 13px; }
+  .vault-edit:hover { color: var(--accent); }
+  .vault-secret { background: var(--paper-2); border-radius: 9px; padding: 10px 12px; }
+  .vault-mask { color: var(--ink-faint); letter-spacing: 2px; }
+  .vault-shown { margin: 0; font: inherit; font-size: 13.5px; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .vault-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .vault-btn { border: 1px solid var(--line); background: var(--card); border-radius: 8px; cursor: pointer; color: var(--ink-soft); font-size: 12.5px; padding: 5px 14px; }
+  .vault-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .vault-body { width: 100%; border: 1px solid var(--line); border-radius: 9px; background: var(--paper-2); resize: vertical; min-height: 96px; padding: 10px 12px; font: inherit; font-size: 14px; color: var(--ink); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .vault-body:focus { outline: none; border-color: var(--accent); }
   .note-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
   .note-head h3 { margin: 0; }
   .note-nav { display: flex; align-items: center; gap: 4px; }
@@ -322,6 +345,7 @@
     <button class="nav-btn" data-view="all"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>All entries <span class="count" id="c-all"></span></button>
     <button class="nav-btn" data-view="calls"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call log <span class="count" id="c-calls"></span></button>
     <button class="nav-btn" data-view="done"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Completed <span class="count" id="c-done"></span></button>
+    <button class="nav-btn" data-view="vault"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Vault <span class="count" id="c-vault"></span></button>
 
     <button class="nav-label cat-toggle" id="catToggle" type="button">Categories <svg class="cat-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
     <div id="catNav"></div>
@@ -385,7 +409,7 @@
     <div class="toolbar">
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="#2b2722" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="searchInput" placeholder="Search titles and details" autocomplete="off">
+        <input id="searchInput" placeholder="Search tasks, notes and vault" autocomplete="off">
       </div>
       <select id="sortSel"><option value="priority">Sort by priority</option><option value="tag">By tag</option><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="due">By due date</option><option value="category">By category</option></select>
       <select id="periodSel" style="display:none"><option value="all">All time</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="thismonth">This month</option><option value="lastmonth">Last month</option><option value="thisyear">This year</option></select>
@@ -442,6 +466,22 @@
   </div>
 </div>
 
+<div class="scrim" id="vaultScrim">
+  <div class="modal">
+    <div class="modal-head"><h3 id="vaultModalTitle">Vault item</h3></div>
+    <div class="modal-body">
+      <div class="field"><label>Label</label><input id="vLabel" placeholder="What is this? e.g. Mailchimp API key" autocomplete="off"></div>
+      <div class="field"><label>Details</label><textarea id="vBody" class="vault-body" placeholder="Paste the key, login or snippet here. Line breaks are fine." autocomplete="off" autocapitalize="off" spellcheck="false"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn danger del" id="vDelete">Delete</button>
+      <button class="btn" id="vCancel">Cancel</button>
+      <button class="btn primary" id="vSave">Save</button>
+    </div>
+  </div>
+</div>
+
+
 <div class="scrim" id="catScrim">
   <div class="modal">
     <div class="modal-head"><h3>Categories</h3></div>
@@ -469,7 +509,7 @@
      Both come from Supabase: Project Settings > API.
      The anon key is meant to be public, your data is protected by login.
      ================================================================= */
-  var BUILD = "Build 2026-06-04b (cache fix)";
+  var BUILD = "Build 2026-06-04c (vault + search)";
   var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
   /* ================================================================= */
@@ -503,22 +543,24 @@
   var PRI_RANK = { high: 0, medium: 1, low: 2 };
   var PRI_LABEL = { high: "High", medium: "Medium", low: "Low" };
 
-  var state = { entries: [], notes: {} };
+  var state = { entries: [], notes: {}, vault: [] };
   var view = "today", search = "", sort = "priority", period = "all", tagFilter = null, openIds = {}, editingId = null;
 
   var LKEY = "boff.cache.v1", PKEY = "boff.pending.v1";
-  var pending = { entries: {}, notes: {}, deletes: {} };
+  var pending = { entries: {}, notes: {}, deletes: {}, vault: {}, vaultDeletes: {} };
 
   /* ---------- local cache ---------- */
-  function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify({ entries: state.entries, notes: state.notes })); } catch (e) {} }
-  function loadLocal() { try { var r = localStorage.getItem(LKEY); if (r) { var d = JSON.parse(r); if (d && d.entries) { state.entries = d.entries; state.notes = d.notes || {}; } } } catch (e) {} }
+  function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify({ entries: state.entries, notes: state.notes, vault: state.vault })); } catch (e) {} }
+  function loadLocal() { try { var r = localStorage.getItem(LKEY); if (r) { var d = JSON.parse(r); if (d && d.entries) { state.entries = d.entries; state.notes = d.notes || {}; state.vault = d.vault || []; } } } catch (e) {} }
   function clearLocal() { try { localStorage.removeItem(LKEY); localStorage.removeItem(PKEY); } catch (e) {} }
   function savePending() { try { localStorage.setItem(PKEY, JSON.stringify(pending)); } catch (e) {} }
-  function loadPending() { try { var r = localStorage.getItem(PKEY); if (r) { var p = JSON.parse(r); if (p) pending = p; } } catch (e) {} }
+  function loadPending() { try { var r = localStorage.getItem(PKEY); if (r) { var p = JSON.parse(r); if (p) pending = p; } } catch (e) {} pending.entries = pending.entries || {}; pending.notes = pending.notes || {}; pending.deletes = pending.deletes || {}; pending.vault = pending.vault || {}; pending.vaultDeletes = pending.vaultDeletes || {}; }
   function dirtyEntry(id) { pending.entries[id] = 1; delete pending.deletes[id]; savePending(); }
   function dirtyDelete(id) { pending.deletes[id] = 1; delete pending.entries[id]; savePending(); }
   function dirtyNote(day) { pending.notes[day] = 1; savePending(); }
-  function pendingCount() { return Object.keys(pending.entries).length + Object.keys(pending.notes).length + Object.keys(pending.deletes).length; }
+  function dirtyVault(id) { pending.vault[id] = 1; delete pending.vaultDeletes[id]; savePending(); }
+  function dirtyVaultDelete(id) { pending.vaultDeletes[id] = 1; delete pending.vault[id]; savePending(); }
+  function pendingCount() { return Object.keys(pending.entries).length + Object.keys(pending.notes).length + Object.keys(pending.deletes).length + Object.keys(pending.vault).length + Object.keys(pending.vaultDeletes).length; }
 
   function persist() { saveLocal(); scheduleSync(); }
 
@@ -582,6 +624,12 @@
     Object.keys(pending.notes).forEach(function (day) {
       ops.push(function () { return sb.from("notes").upsert({ user_id: user.id, day: day, body: state.notes[day] || "", updated: Date.now() }, { onConflict: "user_id,day" }).then(function (r) { if (r.error) throw r.error; delete pending.notes[day]; }); });
     });
+    Object.keys(pending.vaultDeletes).forEach(function (id) {
+      ops.push(function () { return sb.from("vault").delete().eq("user_id", user.id).eq("id", id).then(function (r) { if (r.error) throw r.error; delete pending.vaultDeletes[id]; }); });
+    });
+    Object.keys(pending.vault).forEach(function (id) {
+      ops.push(function () { var v = getVault(id); if (!v) { delete pending.vault[id]; return Promise.resolve(); } return sb.from("vault").upsert(vaultRow(v), { onConflict: "user_id,id" }).then(function (r) { if (r.error) throw r.error; delete pending.vault[id]; }); });
+    });
     var chain = Promise.resolve();
     ops.forEach(function (op) { chain = chain.then(op); });
     return chain.then(function () { savePending(); });
@@ -593,7 +641,10 @@
       return sb.from("notes").select("*").then(function (nr) {
         if (nr.error) throw nr.error;
         var notes = {}; (nr.data || []).forEach(function (r) { notes[r.day] = r.body || ""; });
-        return { entries: (er.data || []).map(cleanRow), notes: notes };
+        return sb.from("vault").select("*").then(function (vr) {
+          if (vr.error) throw vr.error;
+          return { entries: (er.data || []).map(cleanRow), notes: notes, vault: (vr.data || []).map(cleanVault) };
+        });
       });
     });
   }
@@ -606,7 +657,7 @@
     return flush().then(function () {
       if (pendingCount() === 0) {
         return pull().then(function (cloud) {
-          state.entries = cloud.entries; state.notes = cloud.notes;
+          state.entries = cloud.entries; state.notes = cloud.notes; state.vault = cloud.vault || [];
           saveLocal();
           if (document.activeElement !== document.getElementById("dayNote")) loadDayNote();
           render(); notifyDue(false);
@@ -791,6 +842,137 @@
     }, function () { toast("Couldn't open that file"); });
   }
 
+  /* ---------- vault ---------- */
+  function vaultRow(v) { return { user_id: user.id, id: v.id, label: v.label, body: v.body, created: v.created, updated: v.updated }; }
+  function cleanVault(r) { return { id: r.id, label: r.label || "", body: r.body || "", created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
+  function getVault(id) { for (var i = 0; i < state.vault.length; i++) if (state.vault[i].id === id) return state.vault[i]; return null; }
+  function addVault() { var v = { id: uid(), label: "", body: "", created: Date.now(), updated: Date.now() }; state.vault.push(v); dirtyVault(v.id); persist(); openVault(v.id); }
+  function delVault(id) { state.vault = state.vault.filter(function (v) { return v.id !== id; }); dirtyVaultDelete(id); persist(); closeVault(); render(); }
+
+  /* ---------- cross search ---------- */
+  function noteMatches(q) {
+    var out = [];
+    Object.keys(state.notes).forEach(function (day) {
+      var body = state.notes[day] || ""; if (body.toLowerCase().indexOf(q) === -1) return;
+      var line = body.split("\n").filter(function (l) { return l.toLowerCase().indexOf(q) > -1; })[0] || body;
+      out.push({ day: day, snippet: line.trim().slice(0, 90) });
+    });
+    out.sort(function (a, b) { return a.day < b.day ? 1 : -1; });
+    return out;
+  }
+  function vaultMatches(q) {
+    return state.vault.filter(function (v) { return (v.label + " " + v.body).toLowerCase().indexOf(q) > -1; });
+  }
+  function openNoteDay(day) { noteDay = day; setView("today"); loadDayNote(); var n = document.getElementById("noteCard"); if (n) n.scrollIntoView({ behavior: "smooth", block: "start" }); }
+
+  function autoGrow(t) { if (!t) return; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight + 2, 480) + "px"; }
+  function fmtDayLabel(day) { if (day === todayKey()) return "Today"; var d = new Date(day + "T00:00:00"); return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); }
+
+  function renderSearchMatches(list, q) {
+    var notes = noteMatches(q), vaults = vaultMatches(q);
+    if (!notes.length && !vaults.length) return false;
+    var wrap = el("div", "search-block");
+    wrap.appendChild(el("div", "search-head", "Found in notes and vault"));
+    vaults.forEach(function (v) {
+      var card = el("button", "match-row"); card.type = "button";
+      card.appendChild(el("span", "match-kind", "Vault"));
+      var main = el("div", "match-main");
+      main.appendChild(el("div", "match-title", v.label || "Untitled"));
+      main.appendChild(el("div", "match-snip", "Tap to open and reveal"));
+      card.appendChild(main);
+      card.addEventListener("click", function () { setView("vault"); openVault(v.id); });
+      wrap.appendChild(card);
+    });
+    notes.forEach(function (m) {
+      var card = el("button", "match-row"); card.type = "button";
+      card.appendChild(el("span", "match-kind note", "Note"));
+      var main = el("div", "match-main");
+      main.appendChild(el("div", "match-title", fmtDayLabel(m.day) + " notes"));
+      main.appendChild(el("div", "match-snip", m.snippet));
+      card.appendChild(main);
+      card.addEventListener("click", function () { openNoteDay(m.day); });
+      wrap.appendChild(card);
+    });
+    list.appendChild(wrap);
+    return true;
+  }
+
+  function renderVault(list) {
+    var head = el("div", "vault-top");
+    var addBtn = el("button", "btn primary", "Add to vault"); addBtn.type = "button";
+    addBtn.addEventListener("click", addVault);
+    head.appendChild(addBtn); list.appendChild(head);
+    var q = search.trim().toLowerCase();
+    var items = state.vault.slice().sort(function (a, b) { return (a.label || "").toLowerCase() < (b.label || "").toLowerCase() ? -1 : 1; });
+    if (q) items = items.filter(function (v) { return (v.label + " " + v.body).toLowerCase().indexOf(q) > -1; });
+    if (!items.length) {
+      var em = el("div", "empty");
+      em.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+      em.appendChild(el("p", null, q ? "Nothing in the vault matches that." : "Your vault is empty. Add a key, login or snippet to keep it handy."));
+      list.appendChild(em); return;
+    }
+    items.forEach(function (v) { list.appendChild(vaultNode(v)); });
+  }
+  function vaultNode(v) {
+    var card = el("div", "vault-card");
+    var top = el("div", "vault-card-top");
+    top.appendChild(el("div", "vault-label", v.label || "Untitled"));
+    var edit = el("button", "vault-edit", "Edit"); edit.type = "button";
+    edit.addEventListener("click", function () { openVault(v.id); });
+    top.appendChild(edit); card.appendChild(top);
+    var bodyWrap = el("div", "vault-secret");
+    var masked = el("div", "vault-mask", "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022");
+    var shown = el("pre", "vault-shown"); shown.textContent = v.body || ""; shown.style.display = "none";
+    bodyWrap.appendChild(masked); bodyWrap.appendChild(shown); card.appendChild(bodyWrap);
+    var actions = el("div", "vault-actions");
+    var revealed = false;
+    var reveal = el("button", "vault-btn", "Reveal"); reveal.type = "button";
+    reveal.addEventListener("click", function () { revealed = !revealed; masked.style.display = revealed ? "none" : ""; shown.style.display = revealed ? "" : "none"; reveal.textContent = revealed ? "Hide" : "Reveal"; });
+    var copy = el("button", "vault-btn", "Copy"); copy.type = "button";
+    copy.addEventListener("click", function () { copyText(v.body || "", copy); });
+    actions.appendChild(reveal); actions.appendChild(copy); card.appendChild(actions);
+    return card;
+  }
+  function copyText(txt, btn) {
+    function done() { var old = btn.textContent; btn.textContent = "Copied"; setTimeout(function () { btn.textContent = old; }, 1200); }
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt).then(done, function () { toast("Couldn't copy"); }); }
+    else { try { var ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); done(); } catch (e) { toast("Couldn't copy"); } }
+  }
+  var editingVault = null;
+  function openVault(id) {
+    editingVault = id; var v = getVault(id); if (!v) return;
+    document.getElementById("vaultModalTitle").textContent = "Vault item";
+    document.getElementById("vLabel").value = v.label || "";
+    document.getElementById("vBody").value = v.body || "";
+    document.getElementById("vDelete").style.display = "";
+    document.getElementById("vaultScrim").classList.add("open");
+    autoGrow(document.getElementById("vBody"));
+  }
+  function addVault() {
+    editingVault = "new";
+    document.getElementById("vaultModalTitle").textContent = "New vault item";
+    document.getElementById("vLabel").value = "";
+    document.getElementById("vBody").value = "";
+    document.getElementById("vDelete").style.display = "none";
+    document.getElementById("vaultScrim").classList.add("open");
+    autoGrow(document.getElementById("vBody"));
+    document.getElementById("vLabel").focus();
+  }
+  function closeVault() { document.getElementById("vaultScrim").classList.remove("open"); editingVault = null; }
+  function saveVault() {
+    var label = document.getElementById("vLabel").value.trim();
+    var body = document.getElementById("vBody").value;
+    if (editingVault === "new") {
+      if (!label && !body.trim()) { closeVault(); return; }
+      var nv = { id: uid(), label: label, body: body, created: Date.now(), updated: Date.now() };
+      state.vault.push(nv); dirtyVault(nv.id);
+    } else {
+      var v = getVault(editingVault); if (!v) { closeVault(); return; }
+      v.label = label; v.body = body; v.updated = Date.now(); dirtyVault(v.id);
+    }
+    persist(); closeVault(); render();
+  }
+
   /* ---------- render ---------- */
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
 
@@ -802,6 +984,7 @@
     document.getElementById("c-all").textContent = state.entries.length || "";
     document.getElementById("c-calls").textContent = state.entries.filter(function (e) { return e.type === "call"; }).length || "";
     document.getElementById("c-done").textContent = state.entries.filter(function (e) { return e.done; }).length || "";
+    document.getElementById("c-vault").textContent = state.vault.length || "";
     var tk = todayKey();
     document.getElementById("c-today").textContent = state.entries.filter(function (e) { return !e.done && e.due && e.due <= tk; }).length || "";
     var nav = document.getElementById("catNav"); nav.innerHTML = "";
@@ -816,19 +999,25 @@
     });
   }
   function renderHead() {
-    var titles = { todo: ["To-Do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All entries", "Everything in the book"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"] };
+    var titles = { todo: ["To-Do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All entries", "Everything in the book"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"], vault: ["Vault", "Keys, logins and snippets you need to keep handy"] };
     var t; if (view.indexOf("cat:") === 0) { var c = catOf(view.slice(4)); t = [c.label, "Everything filed under " + c.label]; } else t = titles[view] || ["", ""];
     document.getElementById("viewTitle").textContent = t[0];
     document.getElementById("viewSub").textContent = t[1];
     document.getElementById("noteCard").style.display = (view === "today" || view === "todo") ? "" : "none";
     document.getElementById("periodSel").style.display = (view === "done") ? "" : "none";
+    var isVault = view === "vault";
+    document.querySelector(".quick").style.display = isVault ? "none" : "";
+    document.getElementById("sortSel").style.display = isVault ? "none" : "";
   }
   function renderList() {
     var list = document.getElementById("list"); list.innerHTML = "";
+    if (view === "vault") { renderVault(list); return; }
     if (view === "today") list.appendChild(briefingNode());
+    var q = search.trim().toLowerCase();
+    var matched = q ? renderSearchMatches(list, q) : false;
     var entries = visibleEntries();
     if (!entries.length) {
-      if (view !== "today") {
+      if (view !== "today" && !matched) {
         var em = el("div", "empty");
         em.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
         em.appendChild(el("p", null, search ? "Nothing matches that search." : "Nothing here yet. Add your first action point above."));
@@ -994,7 +1183,7 @@
 
   /* ---------- export / import / print ---------- */
   function exportData() {
-    var payload = { app: "boff", version: 2, exported: new Date().toISOString(), entries: state.entries, notes: state.notes };
+    var payload = { app: "boff", version: 2, exported: new Date().toISOString(), entries: state.entries, notes: state.notes, vault: state.vault };
     var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     var url = URL.createObjectURL(blob); var a = document.createElement("a");
     a.href = url; a.download = "boff-" + todayKey() + ".json";
@@ -1008,9 +1197,10 @@
         var d = JSON.parse(reader.result);
         if (!d || !Array.isArray(d.entries)) throw new Error("bad");
         if (!confirm("Replace your current day book with this file? This overwrites what's here now.")) return;
-        state.entries = d.entries; state.notes = d.notes || {};
+        state.entries = d.entries; state.notes = d.notes || {}; state.vault = d.vault || [];
         state.entries.forEach(function (e) { dirtyEntry(e.id); });
         Object.keys(state.notes).forEach(function (day) { dirtyNote(day); });
+        state.vault.forEach(function (v) { dirtyVault(v.id); });
         persist(); loadDayNote(); render(); toast("Imported " + d.entries.length + " entries");
       } catch (err) { toast("That file didn't look like a day book export"); }
     };
@@ -1021,6 +1211,7 @@
   function loadDayNote() {
     if (!noteDay) noteDay = todayKey();
     document.getElementById("dayNote").value = state.notes[noteDay] || "";
+    autoGrow(document.getElementById("dayNote"));
     var isToday = noteDay === todayKey();
     var lbl = "Today's notes";
     if (!isToday) {
@@ -1144,7 +1335,7 @@
       authErr(""); document.getElementById("authFoot").textContent = "Account created. If email confirmation is on, click the link in your inbox, then sign in.";
     });
   }
-  function doSignOut() { if (!sb) return; sb.auth.signOut().then(function () { user = null; state.entries = []; state.notes = {}; clearLocal(); render(); showAuth(); }); }
+  function doSignOut() { if (!sb) return; sb.auth.signOut().then(function () { user = null; state.entries = []; state.notes = {}; state.vault = []; clearLocal(); render(); showAuth(); }); }
 
   function attach() {
     if (!sb) return;
@@ -1315,6 +1506,12 @@
     document.getElementById("mTagInput").addEventListener("blur", addModalTagFromInput);
     document.getElementById("mAttAdd").addEventListener("click", function () { document.getElementById("mAttInput").click(); });
     document.getElementById("mAttInput").addEventListener("change", onAttPicked);
+    document.getElementById("vSave").addEventListener("click", saveVault);
+    document.getElementById("vCancel").addEventListener("click", closeVault);
+    document.getElementById("vDelete").addEventListener("click", function () { if (editingVault && editingVault !== "new") delVault(editingVault); });
+    document.getElementById("vaultScrim").addEventListener("click", function (ev) { if (ev.target === this) closeVault(); });
+    document.getElementById("vBody").addEventListener("input", function () { autoGrow(this); });
+    document.getElementById("dayNote").addEventListener("input", function () { autoGrow(this); });
     document.getElementById("scrim").addEventListener("click", function (ev) { if (ev.target.id === "scrim") closeModal(); });
     document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeModal(); });
     document.getElementById("dayNote").addEventListener("input", function (ev) { var k = noteDay || todayKey(); state.notes[k] = ev.target.value; dirtyNote(k); persist(); });
