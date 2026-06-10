@@ -81,10 +81,11 @@
   .today-date b { display: block; font-size: 22px; color: var(--ink); font-weight: 600; }
 
   .quick { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 14px; margin-bottom: 22px; }
-  .quick-top { display: flex; gap: 10px; align-items: center; }
-  .quick input.title { flex: 1; border: none; background: transparent; font: inherit; font-size: 16px; color: var(--ink); padding: 6px 4px; }
-  .quick input.title::placeholder { color: var(--ink-faint); }
-  .quick input.title:focus { outline: none; }
+  .quick-top { display: flex; gap: 10px; align-items: flex-start; }
+  .quick textarea.title { flex: 1; border: none; background: transparent; font: inherit; font-size: 16px; color: var(--ink); padding: 6px 4px; resize: none; overflow: hidden; min-height: 30px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .quick textarea.title::placeholder { color: var(--ink-faint); }
+  .quick textarea.title:focus { outline: none; }
+  .quick-top .mic, .quick-top .add-btn { margin-top: 1px; }
   .add-btn { border: none; background: var(--accent); color: #fff; border-radius: 10px; padding: 10px 18px; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; transition: .15s; flex: none; }
   .add-btn:hover { background: #0b7d73; }
   .quick-opts { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
@@ -121,6 +122,8 @@
   .briefing .num b { font-family: "Bricolage Grotesque", sans-serif; font-size: 26px; font-weight: 700; display: block; line-height: 1; }
   .briefing .num span { font-size: 11.5px; color: rgba(246,246,243,.62); letter-spacing: .04em; }
   .briefing .num.warn b { color: #ffb4a0; }
+  .briefing .num.clickable { cursor: pointer; border-radius: 9px; margin: -6px -10px; padding: 6px 10px; transition: background .15s; }
+  .briefing .num.clickable:hover { background: rgba(246,246,243,.12); }
   .briefing .carry { margin-top: 14px; border: 1px solid rgba(246,246,243,.25); background: transparent; color: var(--paper); border-radius: 9px; padding: 9px 14px; font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; transition: .15s; }
   .briefing .carry:hover { background: rgba(246,246,243,.12); }
 
@@ -208,6 +211,8 @@
   .note-nav button:hover { border-color: var(--accent); color: var(--accent); }
   .note-nav button:disabled { opacity: .35; cursor: default; border-color: var(--line); color: var(--ink-soft); }
   #noteToday { font-size: 12.5px; }
+  .note-save { font-size: 12.5px; background: var(--accent-soft) !important; color: var(--accent) !important; border-color: transparent !important; }
+  .note-body { margin: 0; font: inherit; font-size: 13.5px; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--paper-2); border-radius: 9px; padding: 11px 13px; line-height: 1.55; }
   .meta-txt.over { color: var(--accent); font-weight: 600; }
   .caller-tag { font-size: 11.5px; color: var(--ink-soft); }
   .entry-actions { display: flex; gap: 4px; flex: none; }
@@ -281,6 +286,8 @@
   .auth-card label { display: block; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); margin: 14px 0 6px; }
   .auth-card input { width: 100%; border: 1px solid var(--line-strong); background: var(--paper); border-radius: 10px; padding: 11px 13px; font: inherit; font-size: 15px; color: var(--ink); }
   .auth-card input:focus { outline: none; border-color: var(--accent); }
+  .link-btn { background: none; border: none; color: var(--accent); cursor: pointer; font: inherit; font-size: 13px; padding: 14px 0 0; }
+  .link-btn:hover { text-decoration: underline; }
   .auth-actions { display: flex; gap: 10px; margin-top: 22px; }
   .auth-actions .btn { flex: 1; }
   .auth-err { color: var(--accent); font-size: 13px; margin-top: 14px; min-height: 18px; }
@@ -317,14 +324,22 @@
   <div class="auth-card">
     <div class="auth-brand"><h1>BOFF</h1><span class="dot"></span></div>
     <p class="lead">Sign in to reach your notes on any device. They stay private to you.</p>
-    <label>Email</label>
-    <input id="authEmail" type="email" autocomplete="username" placeholder="you@email.com">
-    <label>Password</label>
-    <input id="authPass" type="password" autocomplete="current-password" placeholder="Your password">
-    <label class="remember"><input type="checkbox" id="rememberMe" checked> Keep me signed in on this device</label>
-    <div class="auth-actions">
-      <button class="btn primary" id="signInBtn">Sign in</button>
-      <button class="btn" id="signUpBtn">Create account</button>
+    <div id="signinPanel">
+      <label>Email</label>
+      <input id="authEmail" type="email" autocomplete="username" placeholder="you@email.com">
+      <label>Password</label>
+      <input id="authPass" type="password" autocomplete="current-password" placeholder="Your password">
+      <label class="remember"><input type="checkbox" id="rememberMe" checked> Keep me signed in on this device</label>
+      <div class="auth-actions">
+        <button class="btn primary" id="signInBtn">Sign in</button>
+        <button class="btn" id="signUpBtn">Create account</button>
+      </div>
+      <button class="link-btn" id="resetBtn" type="button">Forgot password?</button>
+    </div>
+    <div id="recoveryPanel" style="display:none">
+      <label>New password</label>
+      <input id="newPass" type="password" autocomplete="new-password" placeholder="At least 6 characters">
+      <div class="auth-actions"><button class="btn primary" id="setPassBtn">Set new password</button></div>
     </div>
     <div class="auth-err" id="authErr"></div>
     <div class="auth-foot" id="authFoot"></div>
@@ -347,6 +362,7 @@
     <button class="nav-btn" data-view="calls"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call log <span class="count" id="c-calls"></span></button>
     <button class="nav-btn" data-view="done"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Completed <span class="count" id="c-done"></span></button>
     <button class="nav-btn" data-view="vault"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Vault <span class="count" id="c-vault"></span></button>
+    <button class="nav-btn" data-view="notes"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Notes <span class="count" id="c-notes"></span></button>
 
     <button class="nav-label cat-toggle" id="catToggle" type="button">Categories <svg class="cat-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
     <div id="catNav"></div>
@@ -383,7 +399,7 @@
 
     <div class="quick">
       <div class="quick-top">
-        <input class="title" id="qTitle" placeholder="Add a job. Try: chase the invoice !high tomorrow" autocomplete="off">
+        <textarea class="title" id="qTitle" rows="1" placeholder="Add a job. Try: chase the invoice !high tomorrow" autocomplete="off"></textarea>
         <button class="mic" id="qMic" type="button" title="Dictate" aria-label="Dictate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></button>
         <button class="add-btn" id="qAdd">Add</button>
       </div>
@@ -402,6 +418,7 @@
           <button id="notePrev" type="button" aria-label="Previous day">&#8249;</button>
           <button id="noteToday" type="button">Today</button>
           <button id="noteNext" type="button" aria-label="Next day">&#8250;</button>
+          <button id="noteSave" type="button" class="note-save">Save as note</button>
         </div>
       </div>
       <textarea id="dayNote" placeholder="Jot anything down. Calls to make, thoughts, reminders, the running thread of your day."></textarea>
@@ -472,6 +489,7 @@
   <div class="modal">
     <div class="modal-head"><h3 id="vaultModalTitle">Vault item</h3></div>
     <div class="modal-body">
+      <div class="field"><label>Type</label><select id="vKind"><option value="secret">Key or password (kept hidden)</option><option value="note">Note (always visible)</option></select></div>
       <div class="field"><label>Label</label><input id="vLabel" placeholder="What is this? e.g. Mailchimp API key" autocomplete="off"></div>
       <div class="field"><label>Details</label><textarea id="vBody" class="vault-body" placeholder="Paste the key, login or snippet here. Line breaks are fine." autocomplete="off" autocapitalize="off" spellcheck="false"></textarea></div>
     </div>
@@ -511,7 +529,7 @@
      Both come from Supabase: Project Settings > API.
      The anon key is meant to be public, your data is protected by login.
      ================================================================= */
-  var BUILD = "Build 2026-06-04e (vault button fix)";
+  var BUILD = "Build 2026-06-04h (quick wrap, dashboard launchpad)";
   var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
   /* ================================================================= */
@@ -546,7 +564,7 @@
   var PRI_LABEL = { high: "High", medium: "Medium", low: "Low" };
 
   var state = { entries: [], notes: {}, vault: [] };
-  var view = "today", search = "", sort = "priority", period = "all", tagFilter = null, openIds = {}, editingId = null;
+  var view = "today", search = "", sort = "priority", period = "all", tagFilter = null, focus = null, openIds = {}, editingId = null;
 
   var LKEY = "boff.cache.v1", PKEY = "boff.pending.v1";
   var pending = { entries: {}, notes: {}, deletes: {}, vault: {}, vaultDeletes: {} };
@@ -688,6 +706,16 @@
     else if (view === "calls") arr = arr.filter(function (e) { return e.type === "call"; });
     else if (view === "today") { var tk = todayKey(); arr = arr.filter(function (e) { return !e.done && e.due && e.due <= tk; }); }
     else if (view.indexOf("cat:") === 0) { var cid = view.slice(4); arr = arr.filter(function (e) { return e.category === cid && !e.done; }); }
+    if (focus) {
+      var ftk = todayKey();
+      arr = arr.filter(function (e) {
+        if (e.done) return false;
+        if (focus === "high") return e.priority === "high";
+        if (focus === "due") return e.due === ftk;
+        if (focus === "overdue") return e.due && e.due < ftk;
+        return true;
+      });
+    }
     return sortEntries(arr);
   }
   function sortEntries(arr) {
@@ -764,6 +792,22 @@
     else if (kind === "h") taLinePrefix(ta, "## ");
     else if (kind === "hr") taInsert(ta, "\n---\n");
   }
+  function detailsKeydown(ev) {
+    if (ev.key !== "Enter" || ev.shiftKey) return;
+    var ta = ev.target;
+    if (ta.selectionStart !== ta.selectionEnd) return;
+    var pos = ta.selectionStart, val = ta.value;
+    var lineStart = val.lastIndexOf("\n", pos - 1) + 1;
+    var line = val.slice(lineStart, pos);
+    var mNum = line.match(/^(\s*)(\d+)\.\s(.*)$/);
+    var mBul = line.match(/^(\s*)([-*])\s(.*)$/);
+    if (!mNum && !mBul) return;
+    ev.preventDefault();
+    var content = mNum ? mNum[3] : mBul[3];
+    if (content.trim() === "") { ta.selectionStart = lineStart; ta.selectionEnd = pos; document.execCommand("insertText", false, ""); return; }
+    var marker = mNum ? (mNum[1] + (parseInt(mNum[2], 10) + 1) + ". ") : (mBul[1] + mBul[2] + " ");
+    document.execCommand("insertText", false, "\n" + marker);
+  }
 
   /* ---------- tags ---------- */
   function normTag(s) { return String(s).toLowerCase().replace(/,/g, " ").trim().replace(/\s+/g, " "); }
@@ -793,10 +837,17 @@
   function clearTagFilter() { tagFilter = null; render(); }
   function renderTagFilter() {
     var wrap = document.getElementById("tagFilterWrap"); wrap.innerHTML = "";
-    if (!tagFilter) return;
-    var chip = el("span", "tagfilter", "Tagged: " + tagFilter);
-    var x = el("button", null, "\u00d7"); x.type = "button";
-    x.addEventListener("click", clearTagFilter); chip.appendChild(x); wrap.appendChild(chip);
+    if (tagFilter) {
+      var chip = el("span", "tagfilter", "Tagged: " + tagFilter);
+      var x = el("button", null, "\u00d7"); x.type = "button";
+      x.addEventListener("click", clearTagFilter); chip.appendChild(x); wrap.appendChild(chip);
+    }
+    if (focus) {
+      var lbl = focus === "high" ? "High priority" : focus === "due" ? "Due today" : "Overdue";
+      var fchip = el("span", "tagfilter", "Showing: " + lbl);
+      var fx = el("button", null, "\u00d7"); fx.type = "button";
+      fx.addEventListener("click", clearFocus); fchip.appendChild(fx); wrap.appendChild(fchip);
+    }
   }
 
   /* ---------- attachments ---------- */
@@ -845,8 +896,8 @@
   }
 
   /* ---------- vault ---------- */
-  function vaultRow(v) { return { user_id: user.id, id: v.id, label: v.label, body: v.body, created: v.created, updated: v.updated }; }
-  function cleanVault(r) { return { id: r.id, label: r.label || "", body: r.body || "", created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
+  function vaultRow(v) { return { user_id: user.id, id: v.id, label: v.label, body: v.body, kind: v.kind || "secret", created: v.created, updated: v.updated }; }
+  function cleanVault(r) { return { id: r.id, label: r.label || "", body: r.body || "", kind: r.kind || "secret", created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
   function getVault(id) { for (var i = 0; i < state.vault.length; i++) if (state.vault[i].id === id) return state.vault[i]; return null; }
   function addVault() { var v = { id: uid(), label: "", body: "", created: Date.now(), updated: Date.now() }; state.vault.push(v); dirtyVault(v.id); persist(); openVault(v.id); }
   function delVault(id) { state.vault = state.vault.filter(function (v) { return v.id !== id; }); dirtyVaultDelete(id); persist(); closeVault(); render(); }
@@ -876,13 +927,14 @@
     var wrap = el("div", "search-block");
     wrap.appendChild(el("div", "search-head", "Found in notes and vault"));
     vaults.forEach(function (v) {
+      var isNote = v.kind === "note";
       var card = el("button", "match-row"); card.type = "button";
-      card.appendChild(el("span", "match-kind", "Vault"));
+      card.appendChild(el("span", isNote ? "match-kind note" : "match-kind", isNote ? "Note" : "Vault"));
       var main = el("div", "match-main");
       main.appendChild(el("div", "match-title", v.label || "Untitled"));
-      main.appendChild(el("div", "match-snip", "Tap to open and reveal"));
+      main.appendChild(el("div", "match-snip", isNote ? (v.body || "").split("\n")[0].slice(0, 90) : "Tap to open and reveal"));
       card.appendChild(main);
-      card.addEventListener("click", function () { setView("vault"); openVault(v.id); });
+      card.addEventListener("click", function () { setView(isNote ? "notes" : "vault"); openVault(v.id); });
       wrap.appendChild(card);
     });
     notes.forEach(function (m) {
@@ -905,7 +957,7 @@
     addBtn.addEventListener("click", addVault);
     head.appendChild(addBtn); list.appendChild(head);
     var q = search.trim().toLowerCase();
-    var items = state.vault.slice().sort(function (a, b) { return (a.label || "").toLowerCase() < (b.label || "").toLowerCase() ? -1 : 1; });
+    var items = state.vault.filter(function (v) { return v.kind !== "note"; }).sort(function (a, b) { return (a.label || "").toLowerCase() < (b.label || "").toLowerCase() ? -1 : 1; });
     if (q) items = items.filter(function (v) { return (v.label + " " + v.body).toLowerCase().indexOf(q) > -1; });
     if (!items.length) {
       var em = el("div", "empty");
@@ -914,6 +966,37 @@
       list.appendChild(em); return;
     }
     items.forEach(function (v) { list.appendChild(vaultNode(v)); });
+  }
+  function renderNotes(list) {
+    var head = el("div", "vault-top");
+    var addBtn = el("button", "btn primary", "New note"); addBtn.type = "button";
+    addBtn.addEventListener("click", addNote);
+    head.appendChild(addBtn); list.appendChild(head);
+    var q = search.trim().toLowerCase();
+    var items = state.vault.filter(function (v) { return v.kind === "note"; }).sort(function (a, b) { return b.updated - a.updated; });
+    if (q) items = items.filter(function (v) { return (v.label + " " + v.body).toLowerCase().indexOf(q) > -1; });
+    if (!items.length) {
+      var em = el("div", "empty");
+      em.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+      em.appendChild(el("p", null, q ? "No saved notes match that." : "No saved notes yet. Make one here, or use Save as note on the daily pad."));
+      list.appendChild(em); return;
+    }
+    items.forEach(function (v) { list.appendChild(noteNode(v)); });
+  }
+  function noteNode(v) {
+    var card = el("div", "vault-card");
+    var top = el("div", "vault-card-top");
+    top.appendChild(el("div", "vault-label", v.label || "Untitled"));
+    var edit = el("button", "vault-edit", "Edit"); edit.type = "button";
+    edit.addEventListener("click", function () { openVault(v.id); });
+    top.appendChild(edit); card.appendChild(top);
+    var body = el("pre", "note-body"); body.textContent = v.body || "";
+    card.appendChild(body);
+    var actions = el("div", "vault-actions");
+    var copy = el("button", "vault-btn", "Copy"); copy.type = "button";
+    copy.addEventListener("click", function () { copyText(v.body || "", copy); });
+    actions.appendChild(copy); card.appendChild(actions);
+    return card;
   }
   function vaultNode(v) {
     var card = el("div", "vault-card");
@@ -943,36 +1026,50 @@
   var editingVault = null;
   function openVault(id) {
     editingVault = id; var v = getVault(id); if (!v) return;
-    document.getElementById("vaultModalTitle").textContent = "Vault item";
+    var isNote = v.kind === "note";
+    document.getElementById("vaultModalTitle").textContent = isNote ? "Note" : "Vault item";
+    document.getElementById("vKind").value = v.kind || "secret";
     document.getElementById("vLabel").value = v.label || "";
     document.getElementById("vBody").value = v.body || "";
     document.getElementById("vDelete").style.display = "";
-    document.getElementById("vaultScrim").classList.add("open");
+    document.getElementById("vaultScrim").classList.add("show");
     autoGrow(document.getElementById("vBody"));
   }
-  function addVault() {
+  function openVaultNew(kind) {
     editingVault = "new";
-    document.getElementById("vaultModalTitle").textContent = "New vault item";
+    document.getElementById("vaultModalTitle").textContent = kind === "note" ? "New note" : "New vault item";
+    document.getElementById("vKind").value = kind;
     document.getElementById("vLabel").value = "";
     document.getElementById("vBody").value = "";
     document.getElementById("vDelete").style.display = "none";
-    document.getElementById("vaultScrim").classList.add("open");
+    document.getElementById("vaultScrim").classList.add("show");
     autoGrow(document.getElementById("vBody"));
     document.getElementById("vLabel").focus();
   }
-  function closeVault() { document.getElementById("vaultScrim").classList.remove("open"); editingVault = null; }
+  function addVault() { openVaultNew("secret"); }
+  function addNote() { openVaultNew("note"); }
+  function closeVault() { document.getElementById("vaultScrim").classList.remove("show"); editingVault = null; }
   function saveVault() {
     var label = document.getElementById("vLabel").value.trim();
     var body = document.getElementById("vBody").value;
+    var kind = document.getElementById("vKind").value;
     if (editingVault === "new") {
       if (!label && !body.trim()) { closeVault(); return; }
-      var nv = { id: uid(), label: label, body: body, created: Date.now(), updated: Date.now() };
+      var nv = { id: uid(), label: label, body: body, kind: kind, created: Date.now(), updated: Date.now() };
       state.vault.push(nv); dirtyVault(nv.id);
     } else {
       var v = getVault(editingVault); if (!v) { closeVault(); return; }
-      v.label = label; v.body = body; v.updated = Date.now(); dirtyVault(v.id);
+      v.label = label; v.body = body; v.kind = kind; v.updated = Date.now(); dirtyVault(v.id);
     }
     persist(); closeVault(); render();
+  }
+  function saveDayNoteAsNote() {
+    var txt = (state.notes[noteDay] || "").trim();
+    if (!txt) { toast("Nothing in the pad to save yet"); return; }
+    var firstLine = txt.split("\n")[0].slice(0, 60);
+    var nv = { id: uid(), label: firstLine || ("Note " + fmtDayLabel(noteDay)), body: txt, kind: "note", created: Date.now(), updated: Date.now() };
+    state.vault.push(nv); dirtyVault(nv.id); persist();
+    setView("notes"); openVault(nv.id); toast("Saved as a note");
   }
 
   /* ---------- render ---------- */
@@ -986,7 +1083,8 @@
     document.getElementById("c-all").textContent = state.entries.length || "";
     document.getElementById("c-calls").textContent = state.entries.filter(function (e) { return e.type === "call"; }).length || "";
     document.getElementById("c-done").textContent = state.entries.filter(function (e) { return e.done; }).length || "";
-    document.getElementById("c-vault").textContent = state.vault.length || "";
+    document.getElementById("c-vault").textContent = state.vault.filter(function (v) { return v.kind !== "note"; }).length || "";
+    document.getElementById("c-notes").textContent = state.vault.filter(function (v) { return v.kind === "note"; }).length || "";
     var tk = todayKey();
     document.getElementById("c-today").textContent = state.entries.filter(function (e) { return !e.done && e.due && e.due <= tk; }).length || "";
     var nav = document.getElementById("catNav"); nav.innerHTML = "";
@@ -1001,19 +1099,20 @@
     });
   }
   function renderHead() {
-    var titles = { todo: ["To-Do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All entries", "Everything in the book"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"], vault: ["Vault", "Keys, logins and snippets you need to keep handy"] };
+    var titles = { todo: ["To-Do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All entries", "Everything in the book"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"], vault: ["Vault", "Keys, logins and snippets you need to keep handy"], notes: ["Notes", "Your saved notes, named and kept"] };
     var t; if (view.indexOf("cat:") === 0) { var c = catOf(view.slice(4)); t = [c.label, "Everything filed under " + c.label]; } else t = titles[view] || ["", ""];
     document.getElementById("viewTitle").textContent = t[0];
     document.getElementById("viewSub").textContent = t[1];
     document.getElementById("noteCard").style.display = (view === "today" || view === "todo") ? "" : "none";
     document.getElementById("periodSel").style.display = (view === "done") ? "" : "none";
-    var isVault = view === "vault";
+    var isVault = view === "vault" || view === "notes";
     document.querySelector(".quick").style.display = isVault ? "none" : "";
     document.getElementById("sortSel").style.display = isVault ? "none" : "";
   }
   function renderList() {
     var list = document.getElementById("list"); list.innerHTML = "";
     if (view === "vault") { renderVault(list); return; }
+    if (view === "notes") { renderNotes(list); return; }
     if (view === "today") list.appendChild(briefingNode());
     var q = search.trim().toLowerCase();
     var matched = q ? renderSearchMatches(list, q) : false;
@@ -1124,7 +1223,7 @@
     document.getElementById("s-high").textContent = state.entries.filter(function (e) { return !e.done && e.priority === "high"; }).length;
   }
 
-  function setView(v) { view = v; document.getElementById("side").classList.remove("open"); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function setView(v) { view = v; focus = null; document.getElementById("side").classList.remove("open"); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
 
   var CCKEY = "boff.catcollapsed";
   var catCollapsed = false;
@@ -1329,6 +1428,36 @@
     try { localStorage.setItem(RKEY, want ? "1" : "0"); } catch (e) {}
     if (want !== curRemember) { curRemember = want; sb = makeClient(want); attach(); }
   }
+  function doResetRequest() {
+    var email = document.getElementById("authEmail").value.trim();
+    if (!email) { authErr("Type your email above first, then tap Forgot password."); return; }
+    authErr("");
+    sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split("#")[0].split("?")[0] }).then(function (res) {
+      if (res.error) { authErr(res.error.message); return; }
+      document.getElementById("authFoot").textContent = "Check your email for a reset link. Open it on this device and you'll set a new password here.";
+    });
+  }
+  function showRecovery() {
+    document.getElementById("auth").classList.add("show");
+    document.querySelector(".app").style.display = "none";
+    document.getElementById("signinPanel").style.display = "none";
+    document.getElementById("recoveryPanel").style.display = "";
+    authErr("");
+    document.getElementById("authFoot").textContent = "You're resetting your password. Choose a new one below.";
+  }
+  function doSetNewPassword() {
+    var pass = document.getElementById("newPass").value;
+    if (pass.length < 6) { authErr("Use a password of at least 6 characters."); return; }
+    authErr("");
+    sb.auth.updateUser({ password: pass }).then(function (res) {
+      if (res.error) { authErr(res.error.message); return; }
+      document.getElementById("recoveryPanel").style.display = "none";
+      document.getElementById("signinPanel").style.display = "";
+      document.getElementById("newPass").value = "";
+      if (user) { showApp(); loadCategoriesCloud(); syncNow(); }
+      toast("Password updated");
+    });
+  }
   function doSignIn() {
     var email = document.getElementById("authEmail").value.trim(); var pass = document.getElementById("authPass").value;
     if (!email || !pass) { authErr("Enter your email and password."); return; }
@@ -1353,8 +1482,9 @@
       user = (s && s.data && s.data.session) ? s.data.session.user : null;
       if (user) { showApp(); loadCategoriesCloud(); syncNow(); } else { showAuth(); setSync("", "Signed out"); }
     });
-    sb.auth.onAuthStateChange(function (_evt, session) {
+    sb.auth.onAuthStateChange(function (evt, session) {
       user = session ? session.user : null;
+      if (evt === "PASSWORD_RECOVERY") { showRecovery(); return; }
       if (user) { showApp(); loadCategoriesCloud(); syncNow(); } else { showAuth(); setSync("", "Signed out"); }
     });
   }
@@ -1456,7 +1586,14 @@
   }
 
   /* ---------- morning briefing ---------- */
-  function numNode(n, label, warn) { var d = el("div", "num" + (warn ? " warn" : "")); d.appendChild(el("b", null, String(n))); d.appendChild(el("span", null, label)); return d; }
+  function numNode(n, label, warn, type) {
+    var d = el("div", "num" + (warn ? " warn" : "") + (type && n > 0 ? " clickable" : ""));
+    d.appendChild(el("b", null, String(n))); d.appendChild(el("span", null, label));
+    if (type && n > 0) d.addEventListener("click", function () { setFocus(type); });
+    return d;
+  }
+  function setFocus(type) { focus = type; view = "todo"; document.getElementById("side").classList.remove("open"); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function clearFocus() { focus = null; render(); }
   function briefingNode() {
     var tk = todayKey();
     var open = state.entries.filter(function (e) { return !e.done; });
@@ -1469,9 +1606,9 @@
     b.appendChild(el("h3", null, greet + "."));
     b.appendChild(el("p", null, overdue ? "A few things need catching up on." : dueToday ? "Here's what's on for today." : "Nothing overdue. Clean slate."));
     var nums = el("div", "nums");
-    nums.appendChild(numNode(dueToday, "Due today", false));
-    nums.appendChild(numNode(overdue, "Overdue", overdue > 0));
-    nums.appendChild(numNode(high, "High priority", false));
+    nums.appendChild(numNode(dueToday, "Due today", false, "due"));
+    nums.appendChild(numNode(overdue, "Overdue", overdue > 0, "overdue"));
+    nums.appendChild(numNode(high, "High priority", false, "high"));
     b.appendChild(nums);
     if (overdue > 0) { var carry = el("button", "carry", "Carry " + overdue + " overdue to today"); carry.addEventListener("click", carryOverdue); b.appendChild(carry); }
     return b;
@@ -1500,10 +1637,11 @@
       var p = parseQuickAdd(t.value, def);
       var e = addEntry(p.title, p.category, p.priority, p.type);
       if (p.due) { e.due = p.due; e.updated = Date.now(); dirtyEntry(e.id); persist(); }
-      t.value = ""; t.focus(); render(); toast("Added to the book");
+      t.value = ""; autoGrow(t); t.focus(); render(); toast("Added to the book");
     }
     document.getElementById("qAdd").addEventListener("click", quickAdd);
-    document.getElementById("qTitle").addEventListener("keydown", function (ev) { if (ev.key === "Enter") quickAdd(); });
+    document.getElementById("qTitle").addEventListener("keydown", function (ev) { if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); quickAdd(); } });
+    document.getElementById("qTitle").addEventListener("input", function () { autoGrow(this); });
     document.getElementById("searchInput").addEventListener("input", function (ev) { search = ev.target.value; render(); });
     document.getElementById("sortSel").addEventListener("change", function (ev) { sort = ev.target.value; render(); });
     document.getElementById("periodSel").addEventListener("change", function (ev) { period = ev.target.value; render(); });
@@ -1512,6 +1650,7 @@
     document.getElementById("mDelete").addEventListener("click", function () { if (editingId && confirm("Delete this entry for good?")) { delEntry(editingId); closeModal(); render(); toast("Deleted"); } });
     document.getElementById("mType").addEventListener("change", function (ev) { toggleCaller(ev.target.value); });
     document.querySelectorAll(".md-bar button").forEach(function (b) { b.addEventListener("click", function () { mdAction(b.dataset.md); }); });
+    document.getElementById("mDetails").addEventListener("keydown", detailsKeydown);
     document.getElementById("mTagInput").addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === ",") { ev.preventDefault(); addModalTagFromInput(); } });
     document.getElementById("mTagInput").addEventListener("blur", addModalTagFromInput);
     document.getElementById("mAttAdd").addEventListener("click", function () { document.getElementById("mAttInput").click(); });
@@ -1530,6 +1669,7 @@
     document.getElementById("notePrev").addEventListener("click", function () { shiftNoteDay(-1); });
     document.getElementById("noteNext").addEventListener("click", function () { shiftNoteDay(1); });
     document.getElementById("noteToday").addEventListener("click", goToday);
+    document.getElementById("noteSave").addEventListener("click", saveDayNoteAsNote);
     document.getElementById("exportBtn").addEventListener("click", exportData);
     document.getElementById("importBtn").addEventListener("click", function () { document.getElementById("fileInput").click(); });
     document.getElementById("fileInput").addEventListener("change", function (ev) { if (ev.target.files[0]) importData(ev.target.files[0]); ev.target.value = ""; });
@@ -1554,6 +1694,8 @@
     document.getElementById("menuToggle").addEventListener("click", function () { document.getElementById("side").classList.toggle("open"); });
     document.getElementById("signInBtn").addEventListener("click", doSignIn);
     document.getElementById("signUpBtn").addEventListener("click", doSignUp);
+    document.getElementById("resetBtn").addEventListener("click", doResetRequest);
+    document.getElementById("setPassBtn").addEventListener("click", doSetNewPassword);
     document.getElementById("authPass").addEventListener("keydown", function (ev) { if (ev.key === "Enter") doSignIn(); });
 
     loadDayNote(); render(); notifyDue(false);
