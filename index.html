@@ -213,6 +213,7 @@
   #noteToday { font-size: 12.5px; }
   .note-save { font-size: 12.5px; background: var(--accent-soft) !important; color: var(--accent) !important; border-color: transparent !important; }
   .note-body { margin: 0; font: inherit; font-size: 13.5px; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--paper-2); border-radius: 9px; padding: 11px 13px; line-height: 1.55; }
+  .vault-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 11px; }
   .meta-txt.over { color: var(--accent); font-weight: 600; }
   .caller-tag { font-size: 11.5px; color: var(--ink-soft); }
   .entry-actions { display: flex; gap: 4px; flex: none; }
@@ -490,8 +491,22 @@
     <div class="modal-head"><h3 id="vaultModalTitle">Vault item</h3></div>
     <div class="modal-body">
       <div class="field"><label>Type</label><select id="vKind"><option value="secret">Key or password (kept hidden)</option><option value="note">Note (always visible)</option></select></div>
+      <div class="field"><label>Client</label><select id="vCat"></select></div>
       <div class="field"><label>Label</label><input id="vLabel" placeholder="What is this? e.g. Mailchimp API key" autocomplete="off"></div>
       <div class="field"><label>Details</label><textarea id="vBody" class="vault-body" placeholder="Paste the key, login or snippet here. Line breaks are fine." autocomplete="off" autocapitalize="off" spellcheck="false"></textarea></div>
+      <div class="field">
+        <label>Tags</label>
+        <div id="vTagChips" class="tag-chips"></div>
+        <input id="vTagInput" placeholder="Type a tag and press Enter, e.g. logins" autocomplete="off">
+        <div id="vTagSuggest" class="tag-suggest"></div>
+      </div>
+      <div class="field">
+        <label>Screenshots and files</label>
+        <div id="vAttList" class="att-list"></div>
+        <input type="file" id="vAttInput" accept="image/*,application/pdf" style="display:none">
+        <button type="button" class="btn att-add" id="vAttAdd">Add a screenshot or file</button>
+        <div class="att-hint">Up to 50 MB each. You need to be online to upload or open them.</div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn danger del" id="vDelete">Delete</button>
@@ -529,7 +544,7 @@
      Both come from Supabase: Project Settings > API.
      The anon key is meant to be public, your data is protected by login.
      ================================================================= */
-  var BUILD = "Build 2026-06-04h (quick wrap, dashboard launchpad)";
+  var BUILD = "Build 2026-06-04i (vault client, tags, screenshots)";
   var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
   /* ================================================================= */
@@ -811,7 +826,7 @@
 
   /* ---------- tags ---------- */
   function normTag(s) { return String(s).toLowerCase().replace(/,/g, " ").trim().replace(/\s+/g, " "); }
-  function allTags() { var set = {}; state.entries.forEach(function (e) { (e.tags || []).forEach(function (t) { set[t] = 1; }); }); return Object.keys(set).sort(); }
+  function allTags() { var set = {}; state.entries.forEach(function (e) { (e.tags || []).forEach(function (t) { set[t] = 1; }); }); state.vault.forEach(function (v) { (v.tags || []).forEach(function (t) { set[t] = 1; }); }); return Object.keys(set).sort(); }
   var modalTags = [];
   function renderModalTags() {
     var box = document.getElementById("mTagChips"); box.innerHTML = "";
@@ -896,11 +911,10 @@
   }
 
   /* ---------- vault ---------- */
-  function vaultRow(v) { return { user_id: user.id, id: v.id, label: v.label, body: v.body, kind: v.kind || "secret", created: v.created, updated: v.updated }; }
-  function cleanVault(r) { return { id: r.id, label: r.label || "", body: r.body || "", kind: r.kind || "secret", created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
+  function vaultRow(v) { return { user_id: user.id, id: v.id, label: v.label, body: v.body, kind: v.kind || "secret", category: v.category || null, tags: (v.tags && v.tags.length) ? v.tags.join(",") : null, attachments: (v.attachments && v.attachments.length) ? JSON.stringify(v.attachments) : null, created: v.created, updated: v.updated }; }
+  function cleanVault(r) { var atts = []; if (r.attachments) { try { atts = JSON.parse(r.attachments) || []; } catch (x) { atts = []; } } return { id: r.id, label: r.label || "", body: r.body || "", kind: r.kind || "secret", category: r.category || "", tags: (r.tags ? String(r.tags).split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []), attachments: atts, created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
   function getVault(id) { for (var i = 0; i < state.vault.length; i++) if (state.vault[i].id === id) return state.vault[i]; return null; }
-  function addVault() { var v = { id: uid(), label: "", body: "", created: Date.now(), updated: Date.now() }; state.vault.push(v); dirtyVault(v.id); persist(); openVault(v.id); }
-  function delVault(id) { state.vault = state.vault.filter(function (v) { return v.id !== id; }); dirtyVaultDelete(id); persist(); closeVault(); render(); }
+  function delVault(id) { state.vault = state.vault.filter(function (v) { return v.id !== id; }); dirtyVaultDelete(id); persist(); document.getElementById("vaultScrim").classList.remove("show"); editingVault = null; render(); }
 
   /* ---------- cross search ---------- */
   function noteMatches(q) {
@@ -913,8 +927,9 @@
     out.sort(function (a, b) { return a.day < b.day ? 1 : -1; });
     return out;
   }
+  function vaultText(v) { var cat = v.category ? (catById(v.category) || {}).label || "" : ""; return (v.label + " " + v.body + " " + (v.tags || []).join(" ") + " " + cat).toLowerCase(); }
   function vaultMatches(q) {
-    return state.vault.filter(function (v) { return (v.label + " " + v.body).toLowerCase().indexOf(q) > -1; });
+    return state.vault.filter(function (v) { return vaultText(v).indexOf(q) > -1; });
   }
   function openNoteDay(day) { noteDay = day; setView("today"); loadDayNote(); var n = document.getElementById("noteCard"); if (n) n.scrollIntoView({ behavior: "smooth", block: "start" }); }
 
@@ -958,7 +973,8 @@
     head.appendChild(addBtn); list.appendChild(head);
     var q = search.trim().toLowerCase();
     var items = state.vault.filter(function (v) { return v.kind !== "note"; }).sort(function (a, b) { return (a.label || "").toLowerCase() < (b.label || "").toLowerCase() ? -1 : 1; });
-    if (q) items = items.filter(function (v) { return (v.label + " " + v.body).toLowerCase().indexOf(q) > -1; });
+    if (tagFilter) items = items.filter(function (v) { return (v.tags || []).indexOf(tagFilter) > -1; });
+    if (q) items = items.filter(function (v) { return vaultText(v).indexOf(q) > -1; });
     if (!items.length) {
       var em = el("div", "empty");
       em.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
@@ -974,7 +990,8 @@
     head.appendChild(addBtn); list.appendChild(head);
     var q = search.trim().toLowerCase();
     var items = state.vault.filter(function (v) { return v.kind === "note"; }).sort(function (a, b) { return b.updated - a.updated; });
-    if (q) items = items.filter(function (v) { return (v.label + " " + v.body).toLowerCase().indexOf(q) > -1; });
+    if (tagFilter) items = items.filter(function (v) { return (v.tags || []).indexOf(tagFilter) > -1; });
+    if (q) items = items.filter(function (v) { return vaultText(v).indexOf(q) > -1; });
     if (!items.length) {
       var em = el("div", "empty");
       em.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
@@ -982,6 +999,18 @@
       list.appendChild(em); return;
     }
     items.forEach(function (v) { list.appendChild(noteNode(v)); });
+  }
+  function vaultMeta(v, card) {
+    var meta = el("div", "vault-meta");
+    if (v.category) { var c = catById(v.category); if (c) { var cb = el("span", "badge cat-badge", c.label); cb.style.background = c.color; meta.appendChild(cb); } }
+    (v.tags || []).forEach(function (tg) { var tc = el("span", "tag-chip", tg); tc.addEventListener("click", function () { setTagFilter(tg); }); meta.appendChild(tc); });
+    (v.attachments || []).forEach(function (a) {
+      var ab = el("button", "att-chip"); ab.type = "button";
+      var ic = el("span", "att-ic"); ic.innerHTML = CLIP_SVG; ab.appendChild(ic); ab.appendChild(document.createTextNode(a.name));
+      ab.addEventListener("click", function () { openAttachment(a); });
+      meta.appendChild(ab);
+    });
+    if (meta.children.length) card.appendChild(meta);
   }
   function noteNode(v) {
     var card = el("div", "vault-card");
@@ -992,6 +1021,7 @@
     top.appendChild(edit); card.appendChild(top);
     var body = el("pre", "note-body"); body.textContent = v.body || "";
     card.appendChild(body);
+    vaultMeta(v, card);
     var actions = el("div", "vault-actions");
     var copy = el("button", "vault-btn", "Copy"); copy.type = "button";
     copy.addEventListener("click", function () { copyText(v.body || "", copy); });
@@ -1009,6 +1039,7 @@
     var masked = el("div", "vault-mask", "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022");
     var shown = el("pre", "vault-shown"); shown.textContent = v.body || ""; shown.style.display = "none";
     bodyWrap.appendChild(masked); bodyWrap.appendChild(shown); card.appendChild(bodyWrap);
+    vaultMeta(v, card);
     var actions = el("div", "vault-actions");
     var revealed = false;
     var reveal = el("button", "vault-btn", "Reveal"); reveal.type = "button";
@@ -1023,53 +1054,113 @@
     if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt).then(done, function () { toast("Couldn't copy"); }); }
     else { try { var ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); done(); } catch (e) { toast("Couldn't copy"); } }
   }
-  var editingVault = null;
-  function openVault(id) {
-    editingVault = id; var v = getVault(id); if (!v) return;
+  var editingVault = null, vWasNew = false, vModalTags = [];
+  function fillVaultCat(v) {
+    var sel = document.getElementById("vCat"); sel.innerHTML = "";
+    var none = document.createElement("option"); none.value = ""; none.textContent = "No client / general"; sel.appendChild(none);
+    for (var i = 0; i < categories.length; i++) { var o = document.createElement("option"); o.value = categories[i].id; o.textContent = categories[i].label; sel.appendChild(o); }
+    sel.value = v && v.category ? v.category : "";
+  }
+  function renderVaultTags() {
+    var box = document.getElementById("vTagChips"); box.innerHTML = "";
+    vModalTags.forEach(function (t, i) {
+      var chip = el("span", "tag-edit", t);
+      var x = el("button", null, "\u00d7"); x.type = "button";
+      x.addEventListener("click", function () { vModalTags.splice(i, 1); renderVaultTags(); });
+      chip.appendChild(x); box.appendChild(chip);
+    });
+    var sug = document.getElementById("vTagSuggest"); sug.innerHTML = "";
+    var others = allTags().filter(function (t) { return vModalTags.indexOf(t) === -1; });
+    if (others.length) {
+      sug.appendChild(el("div", "tag-suggest-label", "Your tags, tap to add"));
+      others.forEach(function (t) { var s = el("button", "s", t); s.type = "button"; s.addEventListener("click", function () { vModalTags.push(t); renderVaultTags(); }); sug.appendChild(s); });
+    }
+  }
+  function addVaultTagFromInput() {
+    var inp = document.getElementById("vTagInput"); var t = normTag(inp.value);
+    if (t && vModalTags.indexOf(t) === -1) vModalTags.push(t);
+    inp.value = ""; renderVaultTags();
+  }
+  function openVaultForm(v, isNew) {
+    editingVault = v.id; vWasNew = !!isNew;
     var isNote = v.kind === "note";
-    document.getElementById("vaultModalTitle").textContent = isNote ? "Note" : "Vault item";
+    document.getElementById("vaultModalTitle").textContent = isNew ? (isNote ? "New note" : "New vault item") : (isNote ? "Note" : "Vault item");
     document.getElementById("vKind").value = v.kind || "secret";
     document.getElementById("vLabel").value = v.label || "";
     document.getElementById("vBody").value = v.body || "";
-    document.getElementById("vDelete").style.display = "";
+    fillVaultCat(v);
+    vModalTags = (v.tags || []).slice(); renderVaultTags();
+    renderVaultAtts();
+    document.getElementById("vDelete").style.display = isNew ? "none" : "";
     document.getElementById("vaultScrim").classList.add("show");
     autoGrow(document.getElementById("vBody"));
+    if (isNew) document.getElementById("vLabel").focus();
   }
+  function openVault(id) { var v = getVault(id); if (!v) return; openVaultForm(v, false); }
   function openVaultNew(kind) {
-    editingVault = "new";
-    document.getElementById("vaultModalTitle").textContent = kind === "note" ? "New note" : "New vault item";
-    document.getElementById("vKind").value = kind;
-    document.getElementById("vLabel").value = "";
-    document.getElementById("vBody").value = "";
-    document.getElementById("vDelete").style.display = "none";
-    document.getElementById("vaultScrim").classList.add("show");
-    autoGrow(document.getElementById("vBody"));
-    document.getElementById("vLabel").focus();
+    var v = { id: uid(), label: "", body: "", kind: kind, category: "", tags: [], attachments: [], created: Date.now(), updated: Date.now() };
+    state.vault.push(v); dirtyVault(v.id); persist();
+    openVaultForm(v, true);
   }
   function addVault() { openVaultNew("secret"); }
   function addNote() { openVaultNew("note"); }
-  function closeVault() { document.getElementById("vaultScrim").classList.remove("show"); editingVault = null; }
+  function vaultIsEmpty(v) { return !v.label.trim() && !v.body.trim() && !(v.tags && v.tags.length) && !(v.attachments && v.attachments.length); }
+  function closeVault() {
+    var v = getVault(editingVault);
+    if (v && vWasNew && vaultIsEmpty(v)) { state.vault = state.vault.filter(function (x) { return x.id !== v.id; }); dirtyVaultDelete(v.id); persist(); }
+    document.getElementById("vaultScrim").classList.remove("show"); editingVault = null; vWasNew = false; render();
+  }
   function saveVault() {
-    var label = document.getElementById("vLabel").value.trim();
-    var body = document.getElementById("vBody").value;
-    var kind = document.getElementById("vKind").value;
-    if (editingVault === "new") {
-      if (!label && !body.trim()) { closeVault(); return; }
-      var nv = { id: uid(), label: label, body: body, kind: kind, created: Date.now(), updated: Date.now() };
-      state.vault.push(nv); dirtyVault(nv.id);
-    } else {
-      var v = getVault(editingVault); if (!v) { closeVault(); return; }
-      v.label = label; v.body = body; v.kind = kind; v.updated = Date.now(); dirtyVault(v.id);
-    }
-    persist(); closeVault(); render();
+    var v = getVault(editingVault); if (!v) { closeVault(); return; }
+    v.label = document.getElementById("vLabel").value.trim();
+    v.body = document.getElementById("vBody").value;
+    v.kind = document.getElementById("vKind").value;
+    v.category = document.getElementById("vCat").value;
+    v.tags = vModalTags.slice();
+    v.updated = Date.now(); dirtyVault(v.id);
+    if (vaultIsEmpty(v)) { state.vault = state.vault.filter(function (x) { return x.id !== v.id; }); dirtyVaultDelete(v.id); }
+    persist(); document.getElementById("vaultScrim").classList.remove("show"); editingVault = null; vWasNew = false; render();
   }
   function saveDayNoteAsNote() {
     var txt = (state.notes[noteDay] || "").trim();
     if (!txt) { toast("Nothing in the pad to save yet"); return; }
     var firstLine = txt.split("\n")[0].slice(0, 60);
-    var nv = { id: uid(), label: firstLine || ("Note " + fmtDayLabel(noteDay)), body: txt, kind: "note", created: Date.now(), updated: Date.now() };
+    var nv = { id: uid(), label: firstLine || ("Note " + fmtDayLabel(noteDay)), body: txt, kind: "note", category: "", tags: [], attachments: [], created: Date.now(), updated: Date.now() };
     state.vault.push(nv); dirtyVault(nv.id); persist();
     setView("notes"); openVault(nv.id); toast("Saved as a note");
+  }
+  /* vault attachments */
+  function renderVaultAtts() {
+    var box = document.getElementById("vAttList"); box.innerHTML = "";
+    var v = getVault(editingVault); if (!v) return;
+    (v.attachments || []).forEach(function (a, i) {
+      var row = el("div", "att-row");
+      var nm = el("button", "att-name", a.name); nm.type = "button"; nm.addEventListener("click", function () { openAttachment(a); });
+      var sz = el("span", "att-size", fmtSize(a.size));
+      var rm = el("button", "att-rm", "\u00d7"); rm.type = "button"; rm.addEventListener("click", function () { vRemoveAttachment(i); });
+      row.appendChild(nm); row.appendChild(sz); row.appendChild(rm); box.appendChild(row);
+    });
+  }
+  function vOnAttPicked(ev) { var f = ev.target.files && ev.target.files[0]; ev.target.value = ""; if (f) vUploadAttachment(f); }
+  function vUploadAttachment(file) {
+    var v = getVault(editingVault); if (!v) return;
+    if (!sb || !user) { toast("Sign in and go online to attach files"); return; }
+    if (file.size > 50 * 1048576) { toast("That file is over 50 MB, too big for the free plan"); return; }
+    toast("Uploading " + file.name);
+    var safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    var path = user.id + "/vault-" + v.id + "/" + Date.now() + "-" + safe;
+    sb.storage.from("attachments").upload(path, file, { upsert: false }).then(function (r) {
+      if (r.error) { toast("Upload failed, are you online?"); return; }
+      if (!v.attachments) v.attachments = [];
+      v.attachments.push({ name: file.name, path: path, size: file.size, type: file.type || "" });
+      v.updated = Date.now(); dirtyVault(v.id); persist(); renderVaultAtts(); render(); toast("Attached");
+    }, function () { toast("Upload failed, are you online?"); });
+  }
+  function vRemoveAttachment(i) {
+    var v = getVault(editingVault); if (!v || !v.attachments || !v.attachments[i]) return;
+    var a = v.attachments[i];
+    if (sb && user) sb.storage.from("attachments").remove([a.path]);
+    v.attachments.splice(i, 1); v.updated = Date.now(); dirtyVault(v.id); persist(); renderVaultAtts(); render();
   }
 
   /* ---------- render ---------- */
@@ -1659,6 +1750,10 @@
     document.getElementById("vCancel").addEventListener("click", closeVault);
     document.getElementById("vDelete").addEventListener("click", function () { if (editingVault && editingVault !== "new") delVault(editingVault); });
     document.getElementById("vaultScrim").addEventListener("click", function (ev) { if (ev.target === this) closeVault(); });
+    document.getElementById("vTagInput").addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === ",") { ev.preventDefault(); addVaultTagFromInput(); } });
+    document.getElementById("vTagInput").addEventListener("blur", addVaultTagFromInput);
+    document.getElementById("vAttAdd").addEventListener("click", function () { document.getElementById("vAttInput").click(); });
+    document.getElementById("vAttInput").addEventListener("change", vOnAttPicked);
     document.getElementById("vBody").addEventListener("input", function () { autoGrow(this); });
     document.getElementById("dayNote").addEventListener("input", function () { autoGrow(this); });
     document.getElementById("mToVault").addEventListener("click", function () { if (editingId) moveToVault(editingId); });
