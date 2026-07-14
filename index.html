@@ -359,7 +359,7 @@
     <div class="nav-label">Views</div>
     <button class="nav-btn" data-view="todo"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>To-Do <span class="count" id="c-todo"></span></button>
     <button class="nav-btn" data-view="today"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Today <span class="count" id="c-today"></span></button>
-    <button class="nav-btn" data-view="all"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>All entries <span class="count" id="c-all"></span></button>
+    <button class="nav-btn" data-view="all"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>All live <span class="count" id="c-all"></span></button>
     <button class="nav-btn" data-view="calls"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call log <span class="count" id="c-calls"></span></button>
     <button class="nav-btn" data-view="done"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Completed <span class="count" id="c-done"></span></button>
     <button class="nav-btn" data-view="vault"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Vault <span class="count" id="c-vault"></span></button>
@@ -544,7 +544,7 @@
      Both come from Supabase: Project Settings > API.
      The anon key is meant to be public, your data is protected by login.
      ================================================================= */
-  var BUILD = "Build 2026-06-04i (vault client, tags, screenshots)";
+  var BUILD = "Build 2026-07-14a (copy button, all-live view, call count fix)";
   var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
   /* ================================================================= */
@@ -717,6 +717,7 @@
     if (q) arr = arr.filter(function (e) { return (e.title + " " + e.details + " " + (e.caller || "") + " " + (e.tags || []).join(" ")).toLowerCase().indexOf(q) > -1; });
     if (tagFilter) arr = arr.filter(function (e) { return (e.tags || []).indexOf(tagFilter) > -1; });
     if (view === "todo") arr = arr.filter(function (e) { return !e.done; });
+    else if (view === "all") arr = arr.filter(function (e) { return !e.done; });
     else if (view === "done") arr = arr.filter(function (e) { return e.done && inPeriod(e.updated); });
     else if (view === "calls") arr = arr.filter(function (e) { return e.type === "call"; });
     else if (view === "today") { var tk = todayKey(); arr = arr.filter(function (e) { return !e.done && e.due && e.due <= tk; }); }
@@ -1171,8 +1172,8 @@
   function renderNav() {
     document.querySelectorAll(".nav-btn[data-view]").forEach(function (b) { b.classList.toggle("active", b.dataset.view === view); });
     document.getElementById("c-todo").textContent = state.entries.filter(function (e) { return !e.done; }).length || "";
-    document.getElementById("c-all").textContent = state.entries.length || "";
-    document.getElementById("c-calls").textContent = state.entries.filter(function (e) { return e.type === "call"; }).length || "";
+    document.getElementById("c-all").textContent = state.entries.filter(function (e) { return !e.done; }).length || "";
+    document.getElementById("c-calls").textContent = state.entries.filter(function (e) { return e.type === "call" && !e.done; }).length || "";
     document.getElementById("c-done").textContent = state.entries.filter(function (e) { return e.done; }).length || "";
     document.getElementById("c-vault").textContent = state.vault.filter(function (v) { return v.kind !== "note"; }).length || "";
     document.getElementById("c-notes").textContent = state.vault.filter(function (v) { return v.kind === "note"; }).length || "";
@@ -1190,7 +1191,7 @@
     });
   }
   function renderHead() {
-    var titles = { todo: ["To-Do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All entries", "Everything in the book"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"], vault: ["Vault", "Keys, logins and snippets you need to keep handy"], notes: ["Notes", "Your saved notes, named and kept"] };
+    var titles = { todo: ["To-Do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All live", "Every open entry across all categories"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"], vault: ["Vault", "Keys, logins and snippets you need to keep handy"], notes: ["Notes", "Your saved notes, named and kept"] };
     var t; if (view.indexOf("cat:") === 0) { var c = catOf(view.slice(4)); t = [c.label, "Everything filed under " + c.label]; } else t = titles[view] || ["", ""];
     document.getElementById("viewTitle").textContent = t[0];
     document.getElementById("viewSub").textContent = t[1];
@@ -1281,6 +1282,19 @@
     editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
     editBtn.addEventListener("click", function (ev) { ev.stopPropagation(); openModal(e.id); });
     actions.appendChild(editBtn);
+    var copyBtn = el("button", "icobtn"); copyBtn.title = "Copy to clipboard";
+    copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    copyBtn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      var txt = e.title + (e.details && e.details.trim() ? "\n\n" + e.details.trim() : "");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(function () { toast("Copied"); }, function () { toast("Copy failed"); });
+      } else {
+        var ta = document.createElement("textarea"); ta.value = txt; ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); toast("Copied"); } catch (x) { toast("Copy failed"); } document.body.removeChild(ta);
+      }
+    });
+    actions.appendChild(copyBtn);
     var chev = el("button", "icobtn chev"); chev.title = "Expand";
     chev.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
     chev.addEventListener("click", function (ev) { ev.stopPropagation(); openIds[e.id] = !openIds[e.id]; render(); });
