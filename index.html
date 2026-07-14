@@ -28,6 +28,18 @@
     --p-high: #ef4444; --p-med: #e0992b; --p-low: #22a06b;
     --ok: #22a06b; --warn: #e0992b;
   }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #1a1a1e; --paper-2: #141417; --card: #22222a;
+      --ink: #f0f0ed; --ink-soft: #a0a0aa; --ink-faint: #5a5a66;
+      --line: #2e2e38; --line-strong: #3a3a46;
+      --accent: #14b8a9; --accent-soft: #0d3d3a;
+      --shadow: 0 1px 2px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.18);
+      --shadow-lift: 0 4px 10px rgba(0,0,0,.3), 0 18px 44px rgba(0,0,0,.26);
+      --p-high: #f87171; --p-med: #fbbf24; --p-low: #34d399;
+      --ok: #34d399; --warn: #fbbf24;
+    }
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
   body {
@@ -181,6 +193,19 @@
   .att-chip:hover { border-color: var(--accent); color: var(--accent); }
   .att-chip .att-ic svg, .att-count svg { width: 13px; height: 13px; display: block; }
   .att-count { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; color: var(--ink-faint); }
+  mark { background: var(--accent-soft); color: var(--ink); border-radius: 3px; padding: 0 2px; }
+  .bulk-bar { display: flex; align-items: center; gap: 10px; background: var(--ink); color: var(--paper); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .bulk-bar span { font-size: 13.5px; flex: 1; }
+  .bulk-btn { border: 1px solid rgba(246,246,243,.25); background: transparent; color: var(--paper); border-radius: 8px; padding: 6px 13px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: .15s; }
+  .bulk-btn:hover { background: rgba(246,246,243,.12); }
+  .bulk-btn.danger { border-color: #f87171; color: #f87171; }
+  .entry.selected { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .entry.pinned::after { content: "📌"; position: absolute; right: 8px; top: 8px; font-size: 11px; opacity: .6; }
+  .caller-filter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .caller-chip { border: 1px solid var(--line-strong); background: var(--card); color: var(--ink-soft); border-radius: 20px; padding: 4px 12px; font: inherit; font-size: 12px; cursor: pointer; transition: .15s; }
+  .caller-chip:hover, .caller-chip.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .vault-controls { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+  .build-inline { font-size: 10.5px; color: var(--ink-faint); letter-spacing: .3px; margin-left: auto; }
   .search-block { margin-bottom: 18px; display: flex; flex-direction: column; gap: 8px; }
   .search-head { font-size: 12px; color: var(--ink-faint); letter-spacing: .3px; text-transform: uppercase; }
   .match-row { display: flex; align-items: flex-start; gap: 10px; text-align: left; width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; cursor: pointer; }
@@ -395,7 +420,7 @@
   <main class="main">
     <div class="head">
       <div class="title"><h2 id="viewTitle">To-Do</h2><p id="viewSub">Your open jobs, ranked by what matters most</p></div>
-      <div class="today-date"><span id="dowText"></span><b id="dateText"></b></div>
+      <div class="today-date"><span id="dowText"></span><b id="dateText"></b><div class="build-inline" id="buildInline"></div></div>
     </div>
 
     <div class="quick">
@@ -423,6 +448,7 @@
         </div>
       </div>
       <textarea id="dayNote" placeholder="Jot anything down. Calls to make, thoughts, reminders, the running thread of your day."></textarea>
+      <div style="font-size:11px;color:var(--ink-faint);text-align:right;margin-top:4px;" id="noteCharCount"></div>
     </div>
 
     <div class="toolbar">
@@ -463,6 +489,10 @@
         <div class="field"><label>Due date</label><input id="mDue" type="date"></div>
       </div>
       <div class="field" id="callerField" style="display:none"><label>Who called / from</label><input id="mCaller" placeholder="Name or company"></div>
+      <div class="field-grid">
+        <div class="field"><label>Repeat</label><select id="mRecur"><option value="">No repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
+        <div class="field" style="display:flex;align-items:center;gap:10px;padding-top:22px;"><label style="margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13.5px;color:var(--ink-soft);"><input type="checkbox" id="mPin" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;"> Pin to top</label></div>
+      </div>
       <div class="field">
         <label>Tags</label>
         <div id="mTagChips" class="tag-chips"></div>
@@ -544,7 +574,7 @@
      Both come from Supabase: Project Settings > API.
      The anon key is meant to be public, your data is protected by login.
      ================================================================= */
-  var BUILD = "Build 2026-07-14a (copy button, all-live view, call count fix)";
+  var BUILD = "Build 2026-07-14c (dark mode, recurring, pin, bulk, search highlight, caller filter, vault sort, import merge, last cat, note count, briefing copy, build tag)";
   var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
   /* ================================================================= */
@@ -581,7 +611,10 @@
   var state = { entries: [], notes: {}, vault: [] };
   var view = "today", search = "", sort = "priority", period = "all", tagFilter = null, focus = null, openIds = {}, editingId = null;
 
-  var LKEY = "boff.cache.v1", PKEY = "boff.pending.v1";
+  var LKEY = "boff.cache.v1", PKEY = "boff.pending.v1", LASTCAT_KEY = "boff.lastcat", VAULTSORT_KEY = "boff.vaultsort";
+  var lastCat = (function () { try { return localStorage.getItem(LASTCAT_KEY) || ""; } catch (e) { return ""; } })();
+  var vaultSort = (function () { try { return localStorage.getItem(VAULTSORT_KEY) || "alpha"; } catch (e) { return "alpha"; } })();
+  var bulkSelected = {}, bulkMode = false, callerFilter = null;
   var pending = { entries: {}, notes: {}, deletes: {}, vault: {}, vaultDeletes: {} };
 
   /* ---------- local cache ---------- */
@@ -637,7 +670,7 @@
 
   /* ---------- CRUD ---------- */
   function addEntry(title, cat, pri, type) {
-    var e = { id: uid(), title: title.trim(), details: "", category: cat, priority: pri, type: type, caller: "", due: "", done: false, tags: [], attachments: [], created: Date.now(), updated: Date.now() };
+    var e = { id: uid(), title: title.trim(), details: "", category: cat, priority: pri, type: type, caller: "", due: "", done: false, recur: "", pinned: false, tags: [], attachments: [], created: Date.now(), updated: Date.now() };
     state.entries.push(e); dirtyEntry(e.id); persist(); return e;
   }
   function getEntry(id) { for (var i = 0; i < state.entries.length; i++) if (state.entries[i].id === id) return state.entries[i]; return null; }
@@ -645,7 +678,7 @@
 
   /* ---------- cloud sync ---------- */
   function entryRow(e) { return { user_id: user.id, id: e.id, title: e.title, details: e.details, category: e.category, priority: e.priority, type: e.type, caller: e.caller, due: e.due || null, done: e.done, tags: (e.tags && e.tags.length) ? e.tags.join(",") : null, attachments: (e.attachments && e.attachments.length) ? JSON.stringify(e.attachments) : null, created: e.created, updated: e.updated }; }
-  function cleanRow(r) { var atts = []; if (r.attachments) { try { atts = JSON.parse(r.attachments) || []; } catch (x) { atts = []; } } return { id: r.id, title: r.title, details: r.details || "", category: r.category, priority: r.priority, type: r.type, caller: r.caller || "", due: r.due || "", done: !!r.done, tags: (r.tags ? String(r.tags).split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []), attachments: atts, created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
+  function cleanRow(r) { var atts = []; if (r.attachments) { try { atts = JSON.parse(r.attachments) || []; } catch (x) { atts = []; } } return { id: r.id, title: r.title, details: r.details || "", category: r.category, priority: r.priority, type: r.type, caller: r.caller || "", due: r.due || "", done: !!r.done, recur: r.recur || "", pinned: !!r.pinned, tags: (r.tags ? String(r.tags).split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []), attachments: atts, created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
 
   function flush() {
     if (!sb || !user) return Promise.resolve();
@@ -719,7 +752,7 @@
     if (view === "todo") arr = arr.filter(function (e) { return !e.done; });
     else if (view === "all") arr = arr.filter(function (e) { return !e.done; });
     else if (view === "done") arr = arr.filter(function (e) { return e.done && inPeriod(e.updated); });
-    else if (view === "calls") arr = arr.filter(function (e) { return e.type === "call"; });
+    else if (view === "calls") { arr = arr.filter(function (e) { return e.type === "call"; }); if (callerFilter) arr = arr.filter(function (e) { return e.caller === callerFilter; }); }
     else if (view === "today") { var tk = todayKey(); arr = arr.filter(function (e) { return !e.done && e.due && e.due <= tk; }); }
     else if (view.indexOf("cat:") === 0) { var cid = view.slice(4); arr = arr.filter(function (e) { return e.category === cid && !e.done; }); }
     if (focus) {
@@ -739,6 +772,8 @@
     var s = (view === "todo" || view === "today") ? "priority" : sort;
     if (sort === "tag") s = "priority";
     arr.sort(function (a, b) {
+      /* pinned always floats to top among non-done */
+      if (!a.done && !b.done && a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       if (s === "priority") {
         if (a.done !== b.done) return a.done ? 1 : -1;
         if (PRI_RANK[a.priority] !== PRI_RANK[b.priority]) return PRI_RANK[a.priority] - PRI_RANK[b.priority];
@@ -937,6 +972,11 @@
   function autoGrow(t) { if (!t) return; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight + 2, 480) + "px"; }
   function fmtDayLabel(day) { if (day === todayKey()) return "Today"; var d = new Date(day + "T00:00:00"); return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); }
 
+  function highlightText(str, q) {
+    if (!q) return escapeHtml(str);
+    var safe = escapeHtml(str), safeQ = escapeHtml(q);
+    return safe.replace(new RegExp(safeQ.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), function (m) { return "<mark>" + m + "</mark>"; });
+  }
   function renderSearchMatches(list, q) {
     var notes = noteMatches(q), vaults = vaultMatches(q);
     if (!notes.length && !vaults.length) return false;
@@ -972,17 +1012,46 @@
     var addBtn = el("button", "btn primary", "Add to vault"); addBtn.type = "button";
     addBtn.addEventListener("click", addVault);
     head.appendChild(addBtn); list.appendChild(head);
+    /* sort controls */
+    var controls = el("div", "vault-controls");
+    var sortLbl = el("span", null, "Sort: "); sortLbl.style.cssText = "font-size:12px;color:var(--ink-faint);";
+    controls.appendChild(sortLbl);
+    [["alpha", "A–Z"], ["cat", "By client"], ["newest", "Newest"]].forEach(function (opt) {
+      var b = el("button", "caller-chip" + (vaultSort === opt[0] ? " on" : ""), opt[1]); b.type = "button";
+      b.addEventListener("click", function () { vaultSort = opt[0]; try { localStorage.setItem(VAULTSORT_KEY, vaultSort); } catch (x) {} renderList(); });
+      controls.appendChild(b);
+    });
+    list.appendChild(controls);
     var q = search.trim().toLowerCase();
-    var items = state.vault.filter(function (v) { return v.kind !== "note"; }).sort(function (a, b) { return (a.label || "").toLowerCase() < (b.label || "").toLowerCase() ? -1 : 1; });
+    var items = state.vault.filter(function (v) { return v.kind !== "note"; });
     if (tagFilter) items = items.filter(function (v) { return (v.tags || []).indexOf(tagFilter) > -1; });
     if (q) items = items.filter(function (v) { return vaultText(v).indexOf(q) > -1; });
+    items.sort(function (a, b) {
+      if (vaultSort === "cat") return (a.category || "zzz") < (b.category || "zzz") ? -1 : 1;
+      if (vaultSort === "newest") return b.updated - a.updated;
+      return (a.label || "").toLowerCase() < (b.label || "").toLowerCase() ? -1 : 1;
+    });
     if (!items.length) {
       var em = el("div", "empty");
       em.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
       em.appendChild(el("p", null, q ? "Nothing in the vault matches that." : "Your vault is empty. Add a key, login or snippet to keep it handy."));
       list.appendChild(em); return;
     }
-    items.forEach(function (v) { list.appendChild(vaultNode(v)); });
+    /* group by category if sort=cat */
+    if (vaultSort === "cat") {
+      var seen = {};
+      items.forEach(function (v) {
+        var cid = v.category || "";
+        if (!seen[cid]) {
+          seen[cid] = true;
+          var c = cid ? catById(cid) : null;
+          var g = el("div", "group-label"); g.appendChild(el("span", null, c ? c.label : "General")); g.appendChild(el("span", "ln")); list.appendChild(g);
+        }
+        list.appendChild(vaultNode(v));
+      });
+    } else {
+      items.forEach(function (v) { list.appendChild(vaultNode(v)); });
+    }
   }
   function renderNotes(list) {
     var head = el("div", "vault-top");
@@ -1174,7 +1243,7 @@
     document.getElementById("c-todo").textContent = state.entries.filter(function (e) { return !e.done; }).length || "";
     document.getElementById("c-all").textContent = state.entries.filter(function (e) { return !e.done; }).length || "";
     document.getElementById("c-calls").textContent = state.entries.filter(function (e) { return e.type === "call" && !e.done; }).length || "";
-    document.getElementById("c-done").textContent = state.entries.filter(function (e) { return e.done; }).length || "";
+    document.getElementById("c-done").textContent = "";
     document.getElementById("c-vault").textContent = state.vault.filter(function (v) { return v.kind !== "note"; }).length || "";
     document.getElementById("c-notes").textContent = state.vault.filter(function (v) { return v.kind === "note"; }).length || "";
     var tk = todayKey();
@@ -1208,7 +1277,35 @@
     if (view === "today") list.appendChild(briefingNode());
     var q = search.trim().toLowerCase();
     var matched = q ? renderSearchMatches(list, q) : false;
+    /* caller filter chips for call log */
+    if (view === "calls") {
+      var callers = [];
+      state.entries.filter(function (e) { return e.type === "call" && e.caller && !e.done; }).forEach(function (e) { if (callers.indexOf(e.caller) === -1) callers.push(e.caller); });
+      if (callers.length > 1) {
+        var cf = el("div", "caller-filter");
+        callers.sort().forEach(function (c) {
+          var b = el("button", "caller-chip" + (callerFilter === c ? " on" : ""), c); b.type = "button";
+          b.addEventListener("click", function () { callerFilter = (callerFilter === c) ? null : c; renderList(); });
+          cf.appendChild(b);
+        });
+        list.appendChild(cf);
+      }
+    } else { callerFilter = null; }
     var entries = visibleEntries();
+    /* bulk action bar */
+    var selCount = Object.keys(bulkSelected).length;
+    if (bulkMode && selCount > 0) {
+      var bar = el("div", "bulk-bar");
+      bar.appendChild(el("span", null, selCount + " selected"));
+      var doneBtn = el("button", "bulk-btn", "Mark done"); doneBtn.type = "button";
+      doneBtn.addEventListener("click", function () { bulkMarkDone(); });
+      var delBtn = el("button", "bulk-btn danger", "Delete"); delBtn.type = "button";
+      delBtn.addEventListener("click", function () { if (confirm("Delete " + selCount + " entries?")) bulkDelete(); });
+      var clearBtn = el("button", "bulk-btn", "Clear"); clearBtn.type = "button";
+      clearBtn.addEventListener("click", function () { bulkSelected = {}; bulkMode = false; render(); });
+      bar.appendChild(doneBtn); bar.appendChild(delBtn); bar.appendChild(clearBtn);
+      list.appendChild(bar);
+    }
     if (!entries.length) {
       if (view !== "today" && !matched) {
         var em = el("div", "empty");
@@ -1256,17 +1353,44 @@
     } else { entries.forEach(function (e) { list.appendChild(entryNode(e)); }); }
   }
   function entryNode(e) {
-    var wrap = el("div", "entry p-" + e.priority + (e.done ? " done" : "") + (openIds[e.id] ? " open" : ""));
+    var q = search.trim().toLowerCase();
+    var isSelected = !!bulkSelected[e.id];
+    var wrap = el("div", "entry p-" + e.priority + (e.done ? " done" : "") + (openIds[e.id] ? " open" : "") + (e.pinned && !e.done ? " pinned" : "") + (isSelected ? " selected" : ""));
     var row = el("div", "entry-row");
     var chk = el("div", "check" + (e.done ? " on" : ""));
     chk.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
-    chk.addEventListener("click", function (ev) { ev.stopPropagation(); e.done = !e.done; e.updated = Date.now(); dirtyEntry(e.id); persist(); render(); });
+    chk.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      if (bulkMode) { if (bulkSelected[e.id]) { delete bulkSelected[e.id]; } else { bulkSelected[e.id] = 1; } render(); return; }
+      e.done = !e.done; e.updated = Date.now(); dirtyEntry(e.id);
+      /* recurring: spawn next instance on completion */
+      if (e.done && e.recur && e.due) {
+        var next = new Date(e.due + "T00:00:00");
+        if (e.recur === "daily") next.setDate(next.getDate() + 1);
+        else if (e.recur === "weekly") next.setDate(next.getDate() + 7);
+        else if (e.recur === "monthly") next.setMonth(next.getMonth() + 1);
+        var nk = dayKeyOf(next);
+        var clone = addEntry(e.title, e.category, e.priority, e.type);
+        clone.details = e.details; clone.caller = e.caller; clone.tags = (e.tags || []).slice();
+        clone.recur = e.recur; clone.due = nk; clone.updated = Date.now(); dirtyEntry(clone.id);
+        toast("Done — next " + e.recur + " instance added");
+      }
+      persist(); render();
+    });
+    /* long-press to enter bulk mode */
+    var lpTimer;
+    wrap.addEventListener("pointerdown", function () { lpTimer = setTimeout(function () { bulkMode = true; bulkSelected[e.id] = 1; render(); }, 600); });
+    wrap.addEventListener("pointerup", function () { clearTimeout(lpTimer); });
+    wrap.addEventListener("pointerleave", function () { clearTimeout(lpTimer); });
     row.appendChild(chk);
     var body = el("div", "entry-body");
-    body.appendChild(el("div", "entry-title", e.title));
+    var titleEl = el("div", "entry-title");
+    if (q) { titleEl.innerHTML = highlightText(e.title, q); } else { titleEl.textContent = e.title; }
+    body.appendChild(titleEl);
     var meta = el("div", "entry-meta");
     var c = catOf(e.category); var cb = el("span", "badge cat-badge", c.label); cb.style.background = c.color; meta.appendChild(cb);
     if (!e.done) meta.appendChild(el("span", "badge pri-badge pri-" + e.priority, PRI_LABEL[e.priority]));
+    if (e.recur) { var rb = el("span", "meta-txt", "\u21bb " + e.recur); meta.appendChild(rb); }
     if (e.type === "call") meta.appendChild(el("span", "caller-tag", e.caller ? "Call: " + e.caller : "Call note"));
     else if (e.type === "idea") meta.appendChild(el("span", "caller-tag", "Idea"));
     var due = fmtDue(e.due); if (due && !e.done) meta.appendChild(el("span", "meta-txt" + (due.over ? " over" : ""), due.txt));
@@ -1328,7 +1452,16 @@
     document.getElementById("s-high").textContent = state.entries.filter(function (e) { return !e.done && e.priority === "high"; }).length;
   }
 
-  function setView(v) { view = v; focus = null; document.getElementById("side").classList.remove("open"); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function bulkMarkDone() {
+    Object.keys(bulkSelected).forEach(function (id) { var e = getEntry(id); if (e && !e.done) { e.done = true; e.updated = Date.now(); dirtyEntry(id); } });
+    persist(); bulkSelected = {}; bulkMode = false; render(); toast("Marked done");
+  }
+  function bulkDelete() {
+    Object.keys(bulkSelected).forEach(function (id) { delEntry(id); });
+    bulkSelected = {}; bulkMode = false; render(); toast("Deleted");
+  }
+
+  function setView(v) { view = v; focus = null; callerFilter = null; bulkSelected = {}; bulkMode = false; document.getElementById("side").classList.remove("open"); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
 
   var CCKEY = "boff.catcollapsed";
   var catCollapsed = false;
@@ -1367,6 +1500,8 @@
     document.getElementById("mType").value = e.type;
     document.getElementById("mDue").value = e.due || "";
     document.getElementById("mCaller").value = e.caller || "";
+    document.getElementById("mRecur").value = e.recur || "";
+    document.getElementById("mPin").checked = !!e.pinned;
     modalTags = (e.tags || []).slice();
     renderModalTags();
     renderModalAtts();
@@ -1391,7 +1526,9 @@
     e.title = title; e.details = document.getElementById("mDetails").value;
     e.category = document.getElementById("mCat").value; e.priority = document.getElementById("mPri").value;
     e.type = document.getElementById("mType").value; e.due = document.getElementById("mDue").value;
-    e.caller = document.getElementById("mCaller").value; e.tags = modalTags.slice(); e.updated = Date.now();
+    e.caller = document.getElementById("mCaller").value; e.recur = document.getElementById("mRecur").value;
+    e.pinned = document.getElementById("mPin").checked;
+    e.tags = modalTags.slice(); e.updated = Date.now();
     dirtyEntry(e.id); persist(); closeModal(); render(); toast("Saved");
   }
 
@@ -1410,22 +1547,41 @@
       try {
         var d = JSON.parse(reader.result);
         if (!d || !Array.isArray(d.entries)) throw new Error("bad");
-        if (!confirm("Replace your current day book with this file? This overwrites what's here now.")) return;
-        state.entries = d.entries; state.notes = d.notes || {}; state.vault = d.vault || [];
-        state.entries.forEach(function (e) { dirtyEntry(e.id); });
-        Object.keys(state.notes).forEach(function (day) { dirtyNote(day); });
-        state.vault.forEach(function (v) { dirtyVault(v.id); });
-        persist(); loadDayNote(); render(); toast("Imported " + d.entries.length + " entries");
+        var choice = confirm("Merge with your existing day book?\n\nOK = Merge (adds new entries, skips duplicates)\nCancel = Replace (overwrites everything)");
+        if (choice) {
+          /* merge — add entries/vault items not already present by id */
+          var existIds = {}; state.entries.forEach(function (e) { existIds[e.id] = 1; });
+          var added = 0;
+          (d.entries || []).forEach(function (e) { if (!existIds[e.id]) { state.entries.push(e); dirtyEntry(e.id); added++; } });
+          var existNotes = state.notes;
+          Object.keys(d.notes || {}).forEach(function (day) { if (!existNotes[day]) { state.notes[day] = d.notes[day]; dirtyNote(day); } });
+          var existVIds = {}; state.vault.forEach(function (v) { existVIds[v.id] = 1; });
+          (d.vault || []).forEach(function (v) { if (!existVIds[v.id]) { state.vault.push(v); dirtyVault(v.id); } });
+          persist(); loadDayNote(); render(); toast("Merged — " + added + " new entries added");
+        } else {
+          if (!confirm("Replace your current day book with this file? This cannot be undone.")) return;
+          state.entries = d.entries; state.notes = d.notes || {}; state.vault = d.vault || [];
+          state.entries.forEach(function (e) { dirtyEntry(e.id); });
+          Object.keys(state.notes).forEach(function (day) { dirtyNote(day); });
+          state.vault.forEach(function (v) { dirtyVault(v.id); });
+          persist(); loadDayNote(); render(); toast("Replaced — " + d.entries.length + " entries loaded");
+        }
       } catch (err) { toast("That file didn't look like a day book export"); }
     };
     reader.readAsText(file);
   }
 
   var noteDay = null;
+  function updateNoteCount() {
+    var ta = document.getElementById("dayNote"); if (!ta) return;
+    var chars = ta.value.length, lines = ta.value ? ta.value.split("\n").length : 0;
+    var el2 = document.getElementById("noteCharCount"); if (!el2) return;
+    el2.textContent = chars > 0 ? chars + " chars · " + lines + (lines === 1 ? " line" : " lines") : "";
+  }
   function loadDayNote() {
     if (!noteDay) noteDay = todayKey();
     document.getElementById("dayNote").value = state.notes[noteDay] || "";
-    autoGrow(document.getElementById("dayNote"));
+    autoGrow(document.getElementById("dayNote")); updateNoteCount();
     var isToday = noteDay === todayKey();
     var lbl = "Today's notes";
     if (!isToday) {
@@ -1506,6 +1662,7 @@
         categories = rows.map(function (x) { return { id: x.id, label: x.label, color: x.color }; });
         saveCategoriesLocal();
         fillCatSelect(document.getElementById("qCat"));
+        if (lastCat) { var qcs = document.getElementById("qCat"); if (qcs.querySelector('option[value="' + lastCat + '"]')) qcs.value = lastCat; }
         fillCatSelect(document.getElementById("mCat"));
         render();
       } else { pushCategories(); }
@@ -1709,7 +1866,15 @@
     var greet = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
     var b = el("div", "briefing");
     b.appendChild(el("h3", null, greet + "."));
-    b.appendChild(el("p", null, overdue ? "A few things need catching up on." : dueToday ? "Here's what's on for today." : "Nothing overdue. Clean slate."));
+    var sub;
+    if (overdue > 2 && high > 0) sub = overdue + " things are running late and " + high + " are high priority. Let's triage.";
+    else if (overdue > 0 && dueToday > 0) sub = overdue + " overdue and " + dueToday + " due today. Busy one.";
+    else if (overdue > 0) sub = overdue === 1 ? "One thing needs catching up." : overdue + " things are running late.";
+    else if (high > 0 && dueToday > 0) sub = dueToday + " due today with " + high + " high priority. You've got this.";
+    else if (dueToday > 0) sub = dueToday === 1 ? "One thing due today." : dueToday + " things on for today.";
+    else if (open.length === 0) sub = "Nothing in the book. Enjoy the quiet.";
+    else sub = "Nothing due today. " + open.length + " open in total.";
+    b.appendChild(el("p", null, sub));
     var nums = el("div", "nums");
     nums.appendChild(numNode(dueToday, "Due today", false, "due"));
     nums.appendChild(numNode(overdue, "Overdue", overdue > 0, "overdue"));
@@ -1728,7 +1893,9 @@
   function start() {
     loadLocal(); loadPending();
     document.getElementById("buildTag").textContent = BUILD;
+    document.getElementById("buildInline").textContent = BUILD;
     fillCatSelect(document.getElementById("qCat"));
+    if (lastCat) { var qc = document.getElementById("qCat"); if (qc.querySelector('option[value="' + lastCat + '"]')) qc.value = lastCat; }
     fillCatSelect(document.getElementById("mCat"));
     var now = new Date();
     document.getElementById("dowText").textContent = now.toLocaleDateString("en-GB", { weekday: "long" });
@@ -1738,7 +1905,9 @@
 
     function quickAdd() {
       var t = document.getElementById("qTitle"); if (!t.value.trim()) { t.focus(); return; }
-      var def = { category: document.getElementById("qCat").value, priority: document.getElementById("qPri").value, type: document.getElementById("qType").value };
+      var chosenCat = document.getElementById("qCat").value;
+      lastCat = chosenCat; try { localStorage.setItem(LASTCAT_KEY, lastCat); } catch (x) {}
+      var def = { category: chosenCat, priority: document.getElementById("qPri").value, type: document.getElementById("qType").value };
       var p = parseQuickAdd(t.value, def);
       var e = addEntry(p.title, p.category, p.priority, p.type);
       if (p.due) { e.due = p.due; e.updated = Date.now(); dirtyEntry(e.id); persist(); }
@@ -1769,7 +1938,7 @@
     document.getElementById("vAttAdd").addEventListener("click", function () { document.getElementById("vAttInput").click(); });
     document.getElementById("vAttInput").addEventListener("change", vOnAttPicked);
     document.getElementById("vBody").addEventListener("input", function () { autoGrow(this); });
-    document.getElementById("dayNote").addEventListener("input", function () { autoGrow(this); });
+    document.getElementById("dayNote").addEventListener("input", function () { autoGrow(this); updateNoteCount(); });
     document.getElementById("mToVault").addEventListener("click", function () { if (editingId) moveToVault(editingId); });
     document.getElementById("mTitle").addEventListener("input", function () { autoGrow(this); });
     document.getElementById("scrim").addEventListener("click", function (ev) { if (ev.target.id === "scrim") closeModal(); });
