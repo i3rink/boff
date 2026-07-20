@@ -355,25 +355,27 @@
     .mic { display: none !important; }
   }
   /* ---------- Pomodoro / Focus view ---------- */
-  .pom-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  #pomView { min-width: 0; overflow: hidden; }
+  .pom-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 22px; align-items: start; min-width: 0; }
   @media (max-width: 860px) { .pom-layout { grid-template-columns: 1fr; } }
-  .pom-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 20px 22px; margin-bottom: 16px; }
+  .pom-layout > div { min-width: 0; }
+  .pom-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 20px 22px; margin-bottom: 16px; min-width: 0; overflow: hidden; }
   .pom-card h3 { font-family: "Bricolage Grotesque", sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 14px; color: var(--ink); }
   .pom-card h4 { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 10px; }
-  .pom-task-list { display: flex; flex-direction: column; gap: 7px; }
-  .pom-task { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); transition: border-color .15s; }
+  .pom-task-list { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .pom-task { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); transition: border-color .15s; min-width: 0; overflow: hidden; }
   .pom-task:hover { border-color: var(--accent); }
   .pom-task.pom-active { border-color: var(--accent); background: var(--accent-soft); }
-  .pom-task-name { flex: 1; font-size: 14px; color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pom-task-name { flex: 1; font-size: 13.5px; color: var(--ink); font-weight: 500; min-width: 0; white-space: normal; word-break: break-word; line-height: 1.4; }
   .pom-task-cat { font-size: 11px; font-weight: 600; color: #fff; padding: 2px 7px; border-radius: 20px; flex: none; }
   .pom-task-count { font-size: 12px; color: var(--ink-faint); flex: none; }
-  .pom-focus-btn { border: 1px solid var(--line-strong); background: var(--paper); color: var(--accent); border-radius: 9px; padding: 6px 12px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; flex: none; transition: .15s; white-space: nowrap; }
+  .pom-focus-btn { border: 1px solid var(--line-strong); background: var(--paper); color: var(--accent); border-radius: 9px; padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; flex: none; transition: .15s; white-space: nowrap; }
   .pom-focus-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
   .pom-focus-btn.pom-btn-active { background: var(--accent); border-color: var(--accent); color: #fff; }
   .pom-timer-wrap { text-align: center; }
   .pom-idle { color: var(--ink-faint); font-size: 14px; padding: 20px 0; }
   .pom-task-lbl { font-size: 13px; color: var(--ink-soft); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pom-tag-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 18px; }
+  .pom-tag-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
   .pom-tag-badge { font-size: 12px; font-weight: 600; color: #fff; padding: 3px 10px; border-radius: 20px; }
   .pom-tag-sel { font-size: 12px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 4px 8px; background: var(--paper); color: var(--ink); }
   .pom-ring-wrap { position: relative; width: 140px; height: 140px; margin: 0 auto 10px; }
@@ -391,11 +393,11 @@
   .pom-btn.danger:hover { background: rgba(239,68,68,.07); }
   .pom-count-lbl { font-size: 12px; color: var(--ink-faint); margin-top: 10px; }
   .pom-log-list { display: flex; flex-direction: column; gap: 6px; }
-  .pom-log-row { display: flex; align-items: center; gap: 9px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
+  .pom-log-row { display: flex; align-items: center; gap: 9px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); min-width: 0; overflow: hidden; }
   .pom-log-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
   .pom-log-dot.focus { background: var(--accent); }
   .pom-log-dot.brk { background: var(--ok); }
-  .pom-log-task { flex: 1; font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pom-log-task { flex: 1; font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .pom-log-tag { font-size: 11px; color: var(--ink-faint); flex: none; }
   .pom-log-time { font-size: 11px; color: var(--ink-faint); flex: none; }
   .pom-empty { color: var(--ink-faint); font-size: 13.5px; padding: 8px 0; }
@@ -403,8 +405,7 @@
   .pom-stat { flex: 1; text-align: center; padding: 10px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
   .pom-stat b { display: block; font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); }
   .pom-stat span { font-size: 11px; color: var(--ink-faint); }
-  /* Freestanding timer */
-  .pom-free-label { width: 100%; border: 1px solid var(--line-strong); background: var(--paper); border-radius: 9px; padding: 9px 12px; font: inherit; font-size: 14px; color: var(--ink); margin-bottom: 14px; }
+  .pom-free-label { width: 100%; border: 1px solid var(--line-strong); background: var(--paper); border-radius: 9px; padding: 9px 12px; font: inherit; font-size: 14px; color: var(--ink); margin-bottom: 14px; box-sizing: border-box; }
   .pom-free-label:focus { outline: none; border-color: var(--accent); }
   .pom-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .pom-preset-btn { border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink-soft); border-radius: 8px; padding: 5px 11px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: .15s; }
@@ -549,7 +550,6 @@
     <!-- Focus / Pomodoro view -->
     <div id="pomView" style="display:none">
       <div class="pom-layout">
-
         <!-- LEFT: task-linked timer -->
         <div>
           <div class="pom-card">
@@ -582,7 +582,6 @@
             <div class="pom-task-list" id="pomTaskList"></div>
           </div>
         </div>
-
         <!-- RIGHT: freestanding timer + log -->
         <div>
           <div class="pom-card">
@@ -596,9 +595,7 @@
               <button class="pom-preset-btn" data-mins="50" onclick="freeSetWork(this)">50 min</button>
               <button class="pom-preset-btn" data-mins="90" onclick="freeSetWork(this)">90 min</button>
             </div>
-            <div class="pom-custom-row">
-              Custom: <input id="freeWorkCustom" type="number" min="1" max="180" value="25"> min
-            </div>
+            <div class="pom-custom-row">Custom: <input id="freeWorkCustom" type="number" min="1" max="180" value="25"> min</div>
             <hr class="pom-divider">
             <h4>Break duration</h4>
             <div class="pom-presets" id="freeBreakPresets">
@@ -608,9 +605,7 @@
               <button class="pom-preset-btn" data-mins="20" onclick="freeSetBreak(this)">20 min</button>
               <button class="pom-preset-btn" data-mins="30" onclick="freeSetBreak(this)">30 min</button>
             </div>
-            <div class="pom-custom-row">
-              Custom: <input id="freeBreakCustom" type="number" min="1" max="60" value="10"> min
-            </div>
+            <div class="pom-custom-row">Custom: <input id="freeBreakCustom" type="number" min="1" max="60" value="10"> min</div>
             <hr class="pom-divider">
             <div class="pom-timer-wrap">
               <div class="pom-ring-wrap">
@@ -627,7 +622,6 @@
               </div>
             </div>
           </div>
-
           <div class="pom-card">
             <div class="pom-stats-row">
               <div class="pom-stat"><b id="pomStatToday">0</b><span>Today</span></div>
@@ -638,7 +632,6 @@
             <div id="pomLogList" class="pom-log-list"><div class="pom-empty">No sessions yet today</div></div>
           </div>
         </div>
-
       </div>
     </div>
   </main>
@@ -753,7 +746,7 @@
      Both come from Supabase: Project Settings > API.
      The anon key is meant to be public, your data is protected by login.
      ================================================================= */
-  var BUILD = "Build 2026-07-20b (Focus view + freestanding Pomodoro)";
+  var BUILD = "Build 2026-07-20c (Focus view + freestanding Pomodoro)";
   var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
   /* ================================================================= */
@@ -2099,19 +2092,16 @@
   var pomCounts = (function () { try { var r = localStorage.getItem("boff.pom.counts"); return r ? JSON.parse(r) : {}; } catch (e) { return {}; } })();
   var pomActive = null;
   var pomSecondsLeft = POM_WORK, pomRunning = false, pomBreak = false, pomTimer = null;
-
-  /* -- Freestanding timer state -- */
   var freeWorkMins = 25, freeBreakMins = 10;
-  var freeSecondsLeft = freeWorkMins * 60, freeRunning = false, freeBreak = false, freeTimer = null;
+  var freeSecondsLeft = 25 * 60, freeRunning = false, freeBreak = false, freeTimer = null;
 
   function pomSaveLog() { try { localStorage.setItem("boff.pom.log", JSON.stringify(pomLog.slice(0, 200))); } catch (e) {} }
   function pomSaveCounts() { try { localStorage.setItem("boff.pom.counts", JSON.stringify(pomCounts)); } catch (e) {} }
 
-  /* ---- Task-linked timer ---- */
   function pomRenderTasks() {
     var box = document.getElementById("pomTaskList"); if (!box) return;
     var open = state.entries.filter(function (e) { return !e.done; });
-    if (!open.length) { box.innerHTML = '<p class="pom-empty">No open tasks -- add some from the To-Do view first.</p>'; return; }
+    if (!open.length) { box.innerHTML = '<p class="pom-empty">No open tasks. Add some from the To-Do view first.</p>'; return; }
     box.innerHTML = "";
     open.slice(0, 20).forEach(function (e) {
       var row = document.createElement("div");
@@ -2122,8 +2112,7 @@
       var cnt = pomCounts[e.id] || 0;
       if (cnt) { var cc = document.createElement("span"); cc.className = "pom-task-count"; cc.textContent = cnt + " \uD83C\uDF45"; row.appendChild(cc); }
       var btn = document.createElement("button"); btn.className = "pom-focus-btn" + (pomActive && pomActive.id === e.id ? " pom-btn-active" : "");
-      btn.type = "button";
-      btn.textContent = (pomActive && pomActive.id === e.id) ? "Active" : "Focus";
+      btn.type = "button"; btn.textContent = (pomActive && pomActive.id === e.id) ? "Active" : "Focus";
       (function (entry) { btn.addEventListener("click", function () { pomSelectTask(entry); }); })(e);
       row.appendChild(btn);
       box.appendChild(row);
@@ -2192,8 +2181,7 @@
     var session = { task: pomActive.title, taskId: pomActive.id, tag: c ? c.label : tagId, type: pomBreak ? "break" : "focus", day: todayKey(), ts: Date.now() };
     pomLog.unshift(session); pomSaveLog();
     if (!pomBreak) { pomCounts[pomActive.id] = (pomCounts[pomActive.id] || 0) + 1; pomSaveCounts(); }
-    pomBreak = !pomBreak;
-    pomSecondsLeft = pomBreak ? POM_BREAK : POM_WORK;
+    pomBreak = !pomBreak; pomSecondsLeft = pomBreak ? POM_BREAK : POM_WORK;
     pomUpdateRing(); pomUpdateBtn(); pomUpdateCount();
     pomRenderLog(); pomRenderStats(); render();
     toast(pomBreak ? "Session done - take a break!" : "Break over - back to it!");
@@ -2206,7 +2194,6 @@
     pomRenderTasks();
   }
 
-  /* ---- Freestanding timer ---- */
   function freeSetWork(btn) {
     if (freeRunning) return;
     freeWorkMins = parseInt(btn.dataset.mins, 10);
@@ -2222,10 +2209,8 @@
   }
 
   function freeToggle() {
-    if (freeRunning) {
-      clearInterval(freeTimer); freeRunning = false;
-    } else {
-      /* pick up custom values if changed */
+    if (freeRunning) { clearInterval(freeTimer); freeRunning = false; }
+    else {
       var wc = parseInt(document.getElementById("freeWorkCustom").value, 10);
       var bc = parseInt(document.getElementById("freeBreakCustom").value, 10);
       if (wc > 0 && wc !== freeWorkMins && !freeBreak) { freeWorkMins = wc; freeSecondsLeft = freeWorkMins * 60; freeUpdateRing(); }
@@ -2245,12 +2230,11 @@
     pomChime();
     if (!freeBreak) {
       var lbl = (document.getElementById("freeLabel").value.trim()) || "Freestanding session";
-      var session = { task: lbl, taskId: null, tag: "Free", type: "focus", day: todayKey(), ts: Date.now() };
+      var session = { task: lbl, taskId: null, tag: "Free", type: "focus", day: todayKey(), ts: Date.now(), workMins: freeWorkMins };
       pomLog.unshift(session); pomSaveLog();
       pomRenderLog(); pomRenderStats(); render();
     }
-    freeBreak = !freeBreak;
-    freeSecondsLeft = freeBreak ? freeBreakMins * 60 : freeWorkMins * 60;
+    freeBreak = !freeBreak; freeSecondsLeft = freeBreak ? freeBreakMins * 60 : freeWorkMins * 60;
     freeUpdateRing(); freeUpdateBtn();
     toast(freeBreak ? "Session done - take a break!" : "Break over - back to it!");
   }
@@ -2276,7 +2260,6 @@
     btn.textContent = freeRunning ? "Pause" : (freeSecondsLeft < freeWorkMins * 60 && !freeBreak ? "Resume" : "Start");
   }
 
-  /* ---- Shared log + stats ---- */
   function pomRenderLog() {
     var box = document.getElementById("pomLogList"); if (!box) return;
     var today = pomLog.filter(function (s) { return s.day === todayKey(); });
@@ -2300,8 +2283,7 @@
     var weekFocus = pomLog.filter(function (s) { return s.type === "focus" && s.ts >= weekAgo; });
     var st = document.getElementById("pomStatToday"); if (st) st.textContent = todayFocus.length;
     var sw = document.getElementById("pomStatWeek"); if (sw) sw.textContent = weekFocus.length;
-    /* minutes: task sessions = 25 min each, free sessions use their actual work duration */
-    var mins = pomLog.filter(function (s) { return s.type === "focus" && s.day === tk; }).reduce(function (acc, s) { return acc + (s.taskId ? 25 : (s.workMins || freeWorkMins)); }, 0);
+    var mins = todayFocus.reduce(function (acc, s) { return acc + (s.taskId ? 25 : (s.workMins || freeWorkMins)); }, 0);
     var sm = document.getElementById("pomStatMins"); if (sm) sm.textContent = mins;
   }
 
@@ -2320,15 +2302,16 @@
     } catch (e) {}
   }
 
-  /* Wire custom inputs so typing updates the ring display */
   function pomInitFreeInputs() {
     var wc = document.getElementById("freeWorkCustom");
     var bc = document.getElementById("freeBreakCustom");
     if (wc) wc.addEventListener("change", function () {
-      var v = parseInt(this.value, 10); if (v > 0 && !freeRunning && !freeBreak) { freeWorkMins = v; freeSecondsLeft = v * 60; freeUpdateRing(); document.querySelectorAll("#freeWorkPresets .pom-preset-btn").forEach(function (b) { b.classList.remove("selected"); }); }
+      var v = parseInt(this.value, 10);
+      if (v > 0 && !freeRunning && !freeBreak) { freeWorkMins = v; freeSecondsLeft = v * 60; freeUpdateRing(); document.querySelectorAll("#freeWorkPresets .pom-preset-btn").forEach(function (b) { b.classList.remove("selected"); }); }
     });
     if (bc) bc.addEventListener("change", function () {
-      var v = parseInt(this.value, 10); if (v > 0) { freeBreakMins = v; document.querySelectorAll("#freeBreakPresets .pom-preset-btn").forEach(function (b) { b.classList.remove("selected"); }); }
+      var v = parseInt(this.value, 10);
+      if (v > 0) { freeBreakMins = v; document.querySelectorAll("#freeBreakPresets .pom-preset-btn").forEach(function (b) { b.classList.remove("selected"); }); }
     });
   }
 
