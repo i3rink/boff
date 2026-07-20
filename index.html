@@ -759,7 +759,7 @@
      Both come from Supabase: Project Settings > API.
      The anon key is meant to be public, your data is protected by login.
      ================================================================= */
-  var BUILD = "Build 2026-07-20d (Focus view + repeating alert)";
+  var BUILD = "Build 2026-07-20f (Focus view + wake lock dictation)";
   var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
   /* ================================================================= */
@@ -1993,23 +1993,28 @@
 
   /* ---------- voice dictation ---------- */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var rec = null, recBtn = null, recTarget = null;
+  var rec = null, recBtn = null, recTarget = null, recActive = false, recWakeLock = null;
   function dictationSupported() { return !!SR; }
   function startDictation(targetEl, btn) {
     if (!SR) { toast("Voice input isn't supported here. Use your keyboard's own mic."); return; }
-    if (rec) { rec.stop(); return; }
-    rec = new SR(); rec.lang = "en-GB"; rec.interimResults = false; rec.continuous = true;
-    recBtn = btn; recTarget = targetEl; btn.classList.add("active");
-    rec.onresult = function (ev) {
-      var add = "";
-      for (var i = ev.resultIndex; i < ev.results.length; i++) { if (ev.results[i].isFinal) add += ev.results[i][0].transcript; }
-      if (add) { var sep = (recTarget.value && !/\s$/.test(recTarget.value)) ? " " : ""; recTarget.value += sep + add.trim(); recTarget.dispatchEvent(new Event("input", { bubbles: true })); }
-    };
-    rec.onerror = function () { stopDictation(); };
-    rec.onend = function () { stopDictation(); };
-    try { rec.start(); } catch (e) { stopDictation(); }
+    if (recActive) { recActive = false; if (rec) { rec.stop(); } return; }
+    recBtn = btn; recTarget = targetEl; recActive = true; btn.classList.add("active");
+    if (navigator.wakeLock) { navigator.wakeLock.request("screen").then(function (wl) { recWakeLock = wl; }).catch(function () {}); }
+    function startRec() {
+      if (!recActive) return;
+      rec = new SR(); rec.lang = "en-GB"; rec.interimResults = false; rec.continuous = true;
+      rec.onresult = function (ev) {
+        var add = "";
+        for (var i = ev.resultIndex; i < ev.results.length; i++) { if (ev.results[i].isFinal) add += ev.results[i][0].transcript; }
+        if (add) { var sep = (recTarget.value && !/\s$/.test(recTarget.value)) ? " " : ""; recTarget.value += sep + add.trim(); recTarget.dispatchEvent(new Event("input", { bubbles: true })); }
+      };
+      rec.onerror = function (e) { if (e.error === "not-allowed" || e.error === "service-not-allowed") { recActive = false; stopDictation(); } };
+      rec.onend = function () { if (recActive) { try { rec.start(); } catch (err) {} } else { stopDictation(); } };
+      try { rec.start(); } catch (e) { recActive = false; stopDictation(); }
+    }
+    startRec();
   }
-  function stopDictation() { if (recBtn) recBtn.classList.remove("active"); recBtn = null; recTarget = null; rec = null; }
+  function stopDictation() { recActive = false; if (recBtn) recBtn.classList.remove("active"); recBtn = null; recTarget = null; rec = null; if (recWakeLock) { recWakeLock.release().catch(function () {}); recWakeLock = null; } }
 
   /* ---------- add to calendar (.ics) ---------- */
   function pad2(n) { return String(n).padStart(2, "0"); }
