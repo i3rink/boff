@@ -357,8 +357,9 @@
   /* ---------- Pomodoro / Focus view ---------- */
   .pom-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
   @media (max-width: 860px) { .pom-layout { grid-template-columns: 1fr; } }
-  .pom-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 20px 22px; }
+  .pom-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 20px 22px; margin-bottom: 16px; }
   .pom-card h3 { font-family: "Bricolage Grotesque", sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 14px; color: var(--ink); }
+  .pom-card h4 { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 10px; }
   .pom-task-list { display: flex; flex-direction: column; gap: 7px; }
   .pom-task { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); transition: border-color .15s; }
   .pom-task:hover { border-color: var(--accent); }
@@ -370,7 +371,7 @@
   .pom-focus-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
   .pom-focus-btn.pom-btn-active { background: var(--accent); border-color: var(--accent); color: #fff; }
   .pom-timer-wrap { text-align: center; }
-  .pom-idle { color: var(--ink-faint); font-size: 14px; padding: 30px 0; }
+  .pom-idle { color: var(--ink-faint); font-size: 14px; padding: 20px 0; }
   .pom-task-lbl { font-size: 13px; color: var(--ink-soft); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pom-tag-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 18px; }
   .pom-tag-badge { font-size: 12px; font-weight: 600; color: #fff; padding: 3px 10px; border-radius: 20px; }
@@ -398,10 +399,21 @@
   .pom-log-tag { font-size: 11px; color: var(--ink-faint); flex: none; }
   .pom-log-time { font-size: 11px; color: var(--ink-faint); flex: none; }
   .pom-empty { color: var(--ink-faint); font-size: 13.5px; padding: 8px 0; }
-  .pom-stats-row { display: flex; gap: 16px; margin-bottom: 14px; }
+  .pom-stats-row { display: flex; gap: 12px; margin-bottom: 14px; }
   .pom-stat { flex: 1; text-align: center; padding: 10px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
   .pom-stat b { display: block; font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); }
   .pom-stat span { font-size: 11px; color: var(--ink-faint); }
+  /* Freestanding timer */
+  .pom-free-label { width: 100%; border: 1px solid var(--line-strong); background: var(--paper); border-radius: 9px; padding: 9px 12px; font: inherit; font-size: 14px; color: var(--ink); margin-bottom: 14px; }
+  .pom-free-label:focus { outline: none; border-color: var(--accent); }
+  .pom-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .pom-preset-btn { border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink-soft); border-radius: 8px; padding: 5px 11px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: .15s; }
+  .pom-preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .pom-preset-btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pom-custom-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
+  .pom-custom-row input { width: 56px; border: 1px solid var(--line-strong); background: var(--paper); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 13px; color: var(--ink); text-align: center; }
+  .pom-custom-row input:focus { outline: none; border-color: var(--accent); }
+  .pom-divider { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
 
   @media print {
     .side, .quick, .toolbar, .menu-toggle, .entry-actions, .check, .note-card textarea { display: none !important; }
@@ -533,6 +545,102 @@
     </div>
 
     <div id="list"></div>
+
+    <!-- Focus / Pomodoro view -->
+    <div id="pomView" style="display:none">
+      <div class="pom-layout">
+
+        <!-- LEFT: task-linked timer -->
+        <div>
+          <div class="pom-card">
+            <h3>Task timer</h3>
+            <div class="pom-timer-wrap">
+              <div class="pom-idle" id="pomIdle">Pick a task below to start a session</div>
+              <div id="pomActive" style="display:none">
+                <div class="pom-task-lbl" id="pomTaskLbl"></div>
+                <div class="pom-tag-row">
+                  <span class="pom-tag-badge" id="pomTagBadge"></span>
+                  <select class="pom-tag-sel" id="pomTagSel"></select>
+                </div>
+                <div class="pom-ring-wrap">
+                  <svg width="140" height="140" viewBox="0 0 140 140">
+                    <circle class="pom-ring-bg" cx="70" cy="70" r="60"/>
+                    <circle class="pom-ring-fg" id="pomRingFg" cx="70" cy="70" r="60" stroke="#0d9488" stroke-dasharray="376.99" stroke-dashoffset="0"/>
+                  </svg>
+                  <div class="pom-ring-time" id="pomRingTime">25:00</div>
+                </div>
+                <div class="pom-ring-mode" id="pomRingMode">Focus</div>
+                <div class="pom-controls">
+                  <button class="pom-btn primary" id="pomPlayBtn" type="button" onclick="pomToggle()">Start</button>
+                  <button class="pom-btn danger" type="button" onclick="pomCancel()">Cancel</button>
+                </div>
+                <div class="pom-count-lbl" id="pomCountLbl"></div>
+              </div>
+            </div>
+            <hr class="pom-divider">
+            <h4>Your open tasks</h4>
+            <div class="pom-task-list" id="pomTaskList"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: freestanding timer + log -->
+        <div>
+          <div class="pom-card">
+            <h3>Freestanding timer</h3>
+            <input class="pom-free-label" id="freeLabel" type="text" placeholder="What are you working on? (optional)">
+            <h4>Work duration</h4>
+            <div class="pom-presets" id="freeWorkPresets">
+              <button class="pom-preset-btn selected" data-mins="25" onclick="freeSetWork(this)">25 min</button>
+              <button class="pom-preset-btn" data-mins="30" onclick="freeSetWork(this)">30 min</button>
+              <button class="pom-preset-btn" data-mins="45" onclick="freeSetWork(this)">45 min</button>
+              <button class="pom-preset-btn" data-mins="50" onclick="freeSetWork(this)">50 min</button>
+              <button class="pom-preset-btn" data-mins="90" onclick="freeSetWork(this)">90 min</button>
+            </div>
+            <div class="pom-custom-row">
+              Custom: <input id="freeWorkCustom" type="number" min="1" max="180" value="25"> min
+            </div>
+            <hr class="pom-divider">
+            <h4>Break duration</h4>
+            <div class="pom-presets" id="freeBreakPresets">
+              <button class="pom-preset-btn" data-mins="5" onclick="freeSetBreak(this)">5 min</button>
+              <button class="pom-preset-btn selected" data-mins="10" onclick="freeSetBreak(this)">10 min</button>
+              <button class="pom-preset-btn" data-mins="15" onclick="freeSetBreak(this)">15 min</button>
+              <button class="pom-preset-btn" data-mins="20" onclick="freeSetBreak(this)">20 min</button>
+              <button class="pom-preset-btn" data-mins="30" onclick="freeSetBreak(this)">30 min</button>
+            </div>
+            <div class="pom-custom-row">
+              Custom: <input id="freeBreakCustom" type="number" min="1" max="60" value="10"> min
+            </div>
+            <hr class="pom-divider">
+            <div class="pom-timer-wrap">
+              <div class="pom-ring-wrap">
+                <svg width="140" height="140" viewBox="0 0 140 140">
+                  <circle class="pom-ring-bg" cx="70" cy="70" r="60"/>
+                  <circle class="pom-ring-fg" id="freeRingFg" cx="70" cy="70" r="60" stroke="#7c6cf0" stroke-dasharray="376.99" stroke-dashoffset="0"/>
+                </svg>
+                <div class="pom-ring-time" id="freeRingTime">25:00</div>
+              </div>
+              <div class="pom-ring-mode" id="freeRingMode">Ready</div>
+              <div class="pom-controls">
+                <button class="pom-btn primary" id="freePlayBtn" type="button" onclick="freeToggle()">Start</button>
+                <button class="pom-btn danger" type="button" onclick="freeReset()">Reset</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="pom-card">
+            <div class="pom-stats-row">
+              <div class="pom-stat"><b id="pomStatToday">0</b><span>Today</span></div>
+              <div class="pom-stat"><b id="pomStatWeek">0</b><span>This week</span></div>
+              <div class="pom-stat"><b id="pomStatMins">0</b><span>Minutes</span></div>
+            </div>
+            <h3>Session log</h3>
+            <div id="pomLogList" class="pom-log-list"><div class="pom-empty">No sessions yet today</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </main>
 </div>
 
@@ -635,53 +743,6 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Focus / Pomodoro view -->
-<div id="pomView" style="display:none; padding: 0">
-  <div class="pom-layout">
-    <div class="pom-card">
-      <h3>Your tasks</h3>
-      <div class="pom-task-list" id="pomTaskList"></div>
-    </div>
-    <div>
-      <div class="pom-card" style="margin-bottom:16px">
-        <h3>Timer</h3>
-        <div class="pom-timer-wrap">
-          <div class="pom-idle" id="pomIdle">Pick a task from the list to start a session</div>
-          <div id="pomActive" style="display:none">
-            <div class="pom-task-lbl" id="pomTaskLbl"></div>
-            <div class="pom-tag-row">
-              <span class="pom-tag-badge" id="pomTagBadge"></span>
-              <select class="pom-tag-sel" id="pomTagSel"></select>
-            </div>
-            <div class="pom-ring-wrap">
-              <svg width="140" height="140" viewBox="0 0 140 140">
-                <circle class="pom-ring-bg" cx="70" cy="70" r="60"/>
-                <circle class="pom-ring-fg" id="pomRingFg" cx="70" cy="70" r="60" stroke="#0d9488" stroke-dasharray="376.99" stroke-dashoffset="0"/>
-              </svg>
-              <div class="pom-ring-time" id="pomRingTime">25:00</div>
-            </div>
-            <div class="pom-ring-mode" id="pomRingMode">Focus</div>
-            <div class="pom-controls">
-              <button class="pom-btn primary" id="pomPlayBtn" type="button" onclick="pomToggle()">Start</button>
-              <button class="pom-btn danger" type="button" onclick="pomCancel()">Cancel</button>
-            </div>
-            <div class="pom-count-lbl" id="pomCountLbl"></div>
-          </div>
-        </div>
-      </div>
-      <div class="pom-card">
-        <div class="pom-stats-row">
-          <div class="pom-stat"><b id="pomStatToday">0</b><span>Today</span></div>
-          <div class="pom-stat"><b id="pomStatWeek">0</b><span>This week</span></div>
-          <div class="pom-stat"><b id="pomStatMins">0</b><span>Minutes</span></div>
-        </div>
-        <h3>Session log</h3>
-        <div id="pomLogList" class="pom-log-list"><div class="pom-empty">No sessions yet today</div></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function () {
@@ -692,7 +753,7 @@
      Both come from Supabase: Project Settings > API.
      The anon key is meant to be public, your data is protected by login.
      ================================================================= */
-  var BUILD = "Build 2026-07-14d (manual theme toggle)";
+  var BUILD = "Build 2026-07-20b (Focus view + freestanding Pomodoro)";
   var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
   /* ================================================================= */
@@ -1380,7 +1441,7 @@
     });
   }
   function renderHead() {
-    var titles = { todo: ["To-Do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All live", "Every open entry across all categories"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"], vault: ["Vault", "Keys, logins and snippets you need to keep handy"], notes: ["Notes", "Your saved notes, named and kept"], focus: ["Focus", "Task-linked Pomodoro timer — track your sessions"] };
+    var titles = { todo: ["To-Do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All live", "Every open entry across all categories"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"], vault: ["Vault", "Keys, logins and snippets you need to keep handy"], notes: ["Notes", "Your saved notes, named and kept"], focus: ["Focus", "Task timer and freestanding Pomodoro"] };
     var t; if (view.indexOf("cat:") === 0) { var c = catOf(view.slice(4)); t = [c.label, "Everything filed under " + c.label]; } else t = titles[view] || ["", ""];
     document.getElementById("viewTitle").textContent = t[0];
     document.getElementById("viewSub").textContent = t[1];
@@ -2039,13 +2100,18 @@
   var pomActive = null;
   var pomSecondsLeft = POM_WORK, pomRunning = false, pomBreak = false, pomTimer = null;
 
+  /* -- Freestanding timer state -- */
+  var freeWorkMins = 25, freeBreakMins = 10;
+  var freeSecondsLeft = freeWorkMins * 60, freeRunning = false, freeBreak = false, freeTimer = null;
+
   function pomSaveLog() { try { localStorage.setItem("boff.pom.log", JSON.stringify(pomLog.slice(0, 200))); } catch (e) {} }
   function pomSaveCounts() { try { localStorage.setItem("boff.pom.counts", JSON.stringify(pomCounts)); } catch (e) {} }
 
+  /* ---- Task-linked timer ---- */
   function pomRenderTasks() {
     var box = document.getElementById("pomTaskList"); if (!box) return;
     var open = state.entries.filter(function (e) { return !e.done; });
-    if (!open.length) { box.innerHTML = '<p class="pom-empty">No open tasks — add some from the To-Do view first.</p>'; return; }
+    if (!open.length) { box.innerHTML = '<p class="pom-empty">No open tasks -- add some from the To-Do view first.</p>'; return; }
     box.innerHTML = "";
     open.slice(0, 20).forEach(function (e) {
       var row = document.createElement("div");
@@ -2069,8 +2135,7 @@
     var c = catOf(e.category);
     pomActive = { id: e.id, title: e.title, cat: c.label, catColor: c.color, catId: c.id };
     pomBreak = false; pomSecondsLeft = POM_WORK;
-    pomShowActive();
-    pomRenderTasks();
+    pomShowActive(); pomRenderTasks();
   }
 
   function pomShowActive() {
@@ -2124,15 +2189,14 @@
     var tagSel = document.getElementById("pomTagSel");
     var tagId = tagSel ? tagSel.value : pomActive.catId;
     var c = catById(tagId) || catOf(pomActive.catId);
-    var session = { task: pomActive.title, taskId: pomActive.id, tag: c ? c.label : tagId, tagColor: c ? c.color : pomActive.catColor, type: pomBreak ? "break" : "focus", day: todayKey(), ts: Date.now() };
+    var session = { task: pomActive.title, taskId: pomActive.id, tag: c ? c.label : tagId, type: pomBreak ? "break" : "focus", day: todayKey(), ts: Date.now() };
     pomLog.unshift(session); pomSaveLog();
     if (!pomBreak) { pomCounts[pomActive.id] = (pomCounts[pomActive.id] || 0) + 1; pomSaveCounts(); }
     pomBreak = !pomBreak;
     pomSecondsLeft = pomBreak ? POM_BREAK : POM_WORK;
     pomUpdateRing(); pomUpdateBtn(); pomUpdateCount();
-    pomRenderLog(); pomRenderStats();
-    render();
-    toast(pomBreak ? "Session done \u2014 take a break!" : "Break over \u2014 back to it!");
+    pomRenderLog(); pomRenderStats(); render();
+    toast(pomBreak ? "Session done - take a break!" : "Break over - back to it!");
   }
 
   function pomCancel() {
@@ -2142,6 +2206,77 @@
     pomRenderTasks();
   }
 
+  /* ---- Freestanding timer ---- */
+  function freeSetWork(btn) {
+    if (freeRunning) return;
+    freeWorkMins = parseInt(btn.dataset.mins, 10);
+    document.getElementById("freeWorkCustom").value = freeWorkMins;
+    document.querySelectorAll("#freeWorkPresets .pom-preset-btn").forEach(function (b) { b.classList.toggle("selected", b === btn); });
+    freeReset();
+  }
+
+  function freeSetBreak(btn) {
+    freeBreakMins = parseInt(btn.dataset.mins, 10);
+    document.getElementById("freeBreakCustom").value = freeBreakMins;
+    document.querySelectorAll("#freeBreakPresets .pom-preset-btn").forEach(function (b) { b.classList.toggle("selected", b === btn); });
+  }
+
+  function freeToggle() {
+    if (freeRunning) {
+      clearInterval(freeTimer); freeRunning = false;
+    } else {
+      /* pick up custom values if changed */
+      var wc = parseInt(document.getElementById("freeWorkCustom").value, 10);
+      var bc = parseInt(document.getElementById("freeBreakCustom").value, 10);
+      if (wc > 0 && wc !== freeWorkMins && !freeBreak) { freeWorkMins = wc; freeSecondsLeft = freeWorkMins * 60; freeUpdateRing(); }
+      if (bc > 0) freeBreakMins = bc;
+      freeRunning = true; freeTimer = setInterval(freeTick, 1000);
+    }
+    freeUpdateBtn();
+  }
+
+  function freeTick() {
+    freeSecondsLeft--;
+    freeUpdateRing();
+    if (freeSecondsLeft <= 0) { clearInterval(freeTimer); freeRunning = false; freeSessionEnd(); }
+  }
+
+  function freeSessionEnd() {
+    pomChime();
+    if (!freeBreak) {
+      var lbl = (document.getElementById("freeLabel").value.trim()) || "Freestanding session";
+      var session = { task: lbl, taskId: null, tag: "Free", type: "focus", day: todayKey(), ts: Date.now() };
+      pomLog.unshift(session); pomSaveLog();
+      pomRenderLog(); pomRenderStats(); render();
+    }
+    freeBreak = !freeBreak;
+    freeSecondsLeft = freeBreak ? freeBreakMins * 60 : freeWorkMins * 60;
+    freeUpdateRing(); freeUpdateBtn();
+    toast(freeBreak ? "Session done - take a break!" : "Break over - back to it!");
+  }
+
+  function freeReset() {
+    clearInterval(freeTimer); freeRunning = false; freeBreak = false;
+    freeSecondsLeft = freeWorkMins * 60;
+    freeUpdateRing(); freeUpdateBtn();
+  }
+
+  function freeUpdateRing() {
+    var total = freeBreak ? freeBreakMins * 60 : freeWorkMins * 60;
+    var offset = POM_CIRC * (1 - freeSecondsLeft / total);
+    var fg = document.getElementById("freeRingFg");
+    if (fg) { fg.style.strokeDashoffset = offset; fg.style.stroke = freeBreak ? "#22a06b" : "#7c6cf0"; }
+    var m = Math.floor(freeSecondsLeft / 60), s = freeSecondsLeft % 60;
+    var rt = document.getElementById("freeRingTime"); if (rt) rt.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    var rm = document.getElementById("freeRingMode"); if (rm) rm.textContent = freeBreak ? "Break" : (freeRunning ? "Focus" : "Ready");
+  }
+
+  function freeUpdateBtn() {
+    var btn = document.getElementById("freePlayBtn"); if (!btn) return;
+    btn.textContent = freeRunning ? "Pause" : (freeSecondsLeft < freeWorkMins * 60 && !freeBreak ? "Resume" : "Start");
+  }
+
+  /* ---- Shared log + stats ---- */
   function pomRenderLog() {
     var box = document.getElementById("pomLogList"); if (!box) return;
     var today = pomLog.filter(function (s) { return s.day === todayKey(); });
@@ -2151,10 +2286,10 @@
       var row = document.createElement("div"); row.className = "pom-log-row";
       var dot = document.createElement("div"); dot.className = "pom-log-dot " + (s.type === "focus" ? "focus" : "brk"); row.appendChild(dot);
       var task = document.createElement("span"); task.className = "pom-log-task"; task.textContent = s.task; row.appendChild(task);
-      var tag = document.createElement("span"); tag.className = "pom-log-tag"; tag.textContent = s.tag; row.appendChild(tag);
+      var tag = document.createElement("span"); tag.className = "pom-log-tag"; tag.textContent = s.tag || ""; row.appendChild(tag);
       var d = new Date(s.ts);
       var time = document.createElement("span"); time.className = "pom-log-time";
-      time.textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + " \u00b7 " + s.type;
+      time.textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + " - " + s.type;
       row.appendChild(time); box.appendChild(row);
     });
   }
@@ -2165,7 +2300,9 @@
     var weekFocus = pomLog.filter(function (s) { return s.type === "focus" && s.ts >= weekAgo; });
     var st = document.getElementById("pomStatToday"); if (st) st.textContent = todayFocus.length;
     var sw = document.getElementById("pomStatWeek"); if (sw) sw.textContent = weekFocus.length;
-    var sm = document.getElementById("pomStatMins"); if (sm) sm.textContent = todayFocus.length * 25;
+    /* minutes: task sessions = 25 min each, free sessions use their actual work duration */
+    var mins = pomLog.filter(function (s) { return s.type === "focus" && s.day === tk; }).reduce(function (acc, s) { return acc + (s.taskId ? 25 : (s.workMins || freeWorkMins)); }, 0);
+    var sm = document.getElementById("pomStatMins"); if (sm) sm.textContent = mins;
   }
 
   function pomChime() {
@@ -2183,8 +2320,24 @@
     } catch (e) {}
   }
 
+  /* Wire custom inputs so typing updates the ring display */
+  function pomInitFreeInputs() {
+    var wc = document.getElementById("freeWorkCustom");
+    var bc = document.getElementById("freeBreakCustom");
+    if (wc) wc.addEventListener("change", function () {
+      var v = parseInt(this.value, 10); if (v > 0 && !freeRunning && !freeBreak) { freeWorkMins = v; freeSecondsLeft = v * 60; freeUpdateRing(); document.querySelectorAll("#freeWorkPresets .pom-preset-btn").forEach(function (b) { b.classList.remove("selected"); }); }
+    });
+    if (bc) bc.addEventListener("change", function () {
+      var v = parseInt(this.value, 10); if (v > 0) { freeBreakMins = v; document.querySelectorAll("#freeBreakPresets .pom-preset-btn").forEach(function (b) { b.classList.remove("selected"); }); }
+    });
+  }
+
   window.pomToggle = pomToggle;
   window.pomCancel = pomCancel;
+  window.freeToggle = freeToggle;
+  window.freeReset = freeReset;
+  window.freeSetWork = freeSetWork;
+  window.freeSetBreak = freeSetBreak;
 
   /* ---------- init ---------- */
   function start() {
@@ -2276,7 +2429,7 @@
     document.getElementById("authPass").addEventListener("keydown", function (ev) { if (ev.key === "Enter") doSignIn(); });
 
     loadDayNote(); render(); notifyDue(false);
-    pomRenderLog(); pomRenderStats();
+    pomRenderLog(); pomRenderStats(); pomInitFreeInputs(); freeUpdateRing();
 
     document.getElementById("rememberMe").checked = curRemember;
     if (sb) { attach(); }
