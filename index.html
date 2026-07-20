@@ -360,7 +360,7 @@
   .pom-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 20px 22px; }
   .pom-card h3 { font-family: "Bricolage Grotesque", sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 14px; color: var(--ink); }
   .pom-task-list { display: flex; flex-direction: column; gap: 7px; }
-  .pom-task { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); cursor: pointer; transition: border-color .15s, background .15s; }
+  .pom-task { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); transition: border-color .15s; }
   .pom-task:hover { border-color: var(--accent); }
   .pom-task.pom-active { border-color: var(--accent); background: var(--accent-soft); }
   .pom-task-name { flex: 1; font-size: 14px; color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -403,6 +403,7 @@
   .pom-stat b { display: block; font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); }
   .pom-stat span { font-size: 11px; color: var(--ink-faint); }
 
+  @media print {
     .side, .quick, .toolbar, .menu-toggle, .entry-actions, .check, .note-card textarea { display: none !important; }
     .app { grid-template-columns: 1fr; }
     body { background: #fff; }
@@ -634,8 +635,8 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Focus / Pomodoro view panel -->
-<div id="pomView" style="display:none">
+<!-- Focus / Pomodoro view -->
+<div id="pomView" style="display:none; padding: 0">
   <div class="pom-layout">
     <div class="pom-card">
       <h3>Your tasks</h3>
@@ -1363,7 +1364,7 @@
     document.getElementById("c-done").textContent = "";
     document.getElementById("c-vault").textContent = state.vault.filter(function (v) { return v.kind !== "note"; }).length || "";
     document.getElementById("c-notes").textContent = state.vault.filter(function (v) { return v.kind === "note"; }).length || "";
-    var pomDone = pomLog.filter(function (s) { return s.type === "focus" && s.day === pomTodayKey(); }).length;
+    var pomDone = pomLog.filter(function (s) { return s.type === "focus" && s.day === todayKey(); }).length;
     document.getElementById("c-focus").textContent = pomDone || "";
     var tk = todayKey();
     document.getElementById("c-today").textContent = state.entries.filter(function (e) { return !e.done && e.due && e.due <= tk; }).length || "";
@@ -1389,9 +1390,9 @@
     var isFocus = view === "focus";
     document.querySelector(".quick").style.display = (isVault || isFocus) ? "none" : "";
     document.getElementById("sortSel").style.display = (isVault || isFocus) ? "none" : "";
+    document.getElementById("searchInput").closest(".toolbar").style.display = isFocus ? "none" : "";
     document.getElementById("pomView").style.display = isFocus ? "" : "none";
     document.getElementById("list").style.display = isFocus ? "none" : "";
-    document.querySelector(".toolbar").style.display = isFocus ? "none" : "";
   }
   function renderList() {
     var list = document.getElementById("list"); list.innerHTML = "";
@@ -2032,13 +2033,12 @@
      POMODORO ENGINE
      ================================================================= */
   var POM_WORK = 25 * 60, POM_BREAK = 5 * 60;
-  var POM_CIRC = 2 * Math.PI * 60; /* r=60 */
+  var POM_CIRC = 2 * Math.PI * 60;
   var pomLog = (function () { try { var r = localStorage.getItem("boff.pom.log"); return r ? JSON.parse(r) : []; } catch (e) { return []; } })();
   var pomCounts = (function () { try { var r = localStorage.getItem("boff.pom.counts"); return r ? JSON.parse(r) : {}; } catch (e) { return {}; } })();
-  var pomActive = null; /* { id, title, cat, catColor, tag } */
+  var pomActive = null;
   var pomSecondsLeft = POM_WORK, pomRunning = false, pomBreak = false, pomTimer = null;
 
-  function pomTodayKey() { return todayKey(); }
   function pomSaveLog() { try { localStorage.setItem("boff.pom.log", JSON.stringify(pomLog.slice(0, 200))); } catch (e) {} }
   function pomSaveCounts() { try { localStorage.setItem("boff.pom.counts", JSON.stringify(pomCounts)); } catch (e) {} }
 
@@ -2054,11 +2054,11 @@
       var c = catOf(e.category);
       var badge = document.createElement("span"); badge.className = "pom-task-cat"; badge.style.background = c.color; badge.textContent = c.label; row.appendChild(badge);
       var cnt = pomCounts[e.id] || 0;
-      if (cnt) { var cc = document.createElement("span"); cc.className = "pom-task-count"; cc.textContent = cnt + " 🍅"; row.appendChild(cc); }
+      if (cnt) { var cc = document.createElement("span"); cc.className = "pom-task-count"; cc.textContent = cnt + " \uD83C\uDF45"; row.appendChild(cc); }
       var btn = document.createElement("button"); btn.className = "pom-focus-btn" + (pomActive && pomActive.id === e.id ? " pom-btn-active" : "");
       btn.type = "button";
       btn.textContent = (pomActive && pomActive.id === e.id) ? "Active" : "Focus";
-      btn.addEventListener("click", function () { pomSelectTask(e); });
+      (function (entry) { btn.addEventListener("click", function () { pomSelectTask(entry); }); })(e);
       row.appendChild(btn);
       box.appendChild(row);
     });
@@ -2067,7 +2067,7 @@
   function pomSelectTask(e) {
     if (pomRunning) return;
     var c = catOf(e.category);
-    pomActive = { id: e.id, title: e.title, cat: c.label, catColor: c.color, tag: c.id };
+    pomActive = { id: e.id, title: e.title, cat: c.label, catColor: c.color, catId: c.id };
     pomBreak = false; pomSecondsLeft = POM_WORK;
     pomShowActive();
     pomRenderTasks();
@@ -2081,14 +2081,13 @@
     var badge = document.getElementById("pomTagBadge");
     badge.textContent = pomActive.cat; badge.style.background = pomActive.catColor;
     var sel = document.getElementById("pomTagSel"); sel.innerHTML = "";
-    categories.forEach(function (c) { var o = document.createElement("option"); o.value = c.id; o.textContent = c.label; if (c.id === pomActive.tag) o.selected = true; sel.appendChild(o); });
+    categories.forEach(function (c) { var o = document.createElement("option"); o.value = c.id; o.textContent = c.label; if (c.id === pomActive.catId) o.selected = true; sel.appendChild(o); });
     pomUpdateRing(); pomUpdateBtn(); pomUpdateCount();
   }
 
   function pomUpdateRing() {
     var total = pomBreak ? POM_BREAK : POM_WORK;
-    var frac = pomSecondsLeft / total;
-    var offset = POM_CIRC * (1 - frac);
+    var offset = POM_CIRC * (1 - pomSecondsLeft / total);
     var fg = document.getElementById("pomRingFg");
     if (fg) { fg.style.strokeDashoffset = offset; fg.style.stroke = pomBreak ? "#22a06b" : "#0d9488"; }
     var m = Math.floor(pomSecondsLeft / 60), s = pomSecondsLeft % 60;
@@ -2098,8 +2097,7 @@
 
   function pomUpdateBtn() {
     var btn = document.getElementById("pomPlayBtn"); if (!btn) return;
-    if (pomRunning) btn.textContent = "Pause";
-    else btn.textContent = (pomSecondsLeft < (pomBreak ? POM_BREAK : POM_WORK)) ? "Resume" : "Start";
+    btn.textContent = pomRunning ? "Pause" : ((pomSecondsLeft < (pomBreak ? POM_BREAK : POM_WORK)) ? "Resume" : "Start");
   }
 
   function pomUpdateCount() {
@@ -2118,29 +2116,23 @@
   function pomTick() {
     pomSecondsLeft--;
     pomUpdateRing();
-    if (pomSecondsLeft <= 0) {
-      clearInterval(pomTimer); pomRunning = false;
-      pomSessionEnd();
-    }
+    if (pomSecondsLeft <= 0) { clearInterval(pomTimer); pomRunning = false; pomSessionEnd(); }
   }
 
   function pomSessionEnd() {
     pomChime();
-    var tag = (document.getElementById("pomTagSel") || {}).value || pomActive.tag;
-    var c = catById(tag) || catOf(pomActive.tag);
-    var session = { task: pomActive.title, taskId: pomActive.id, tag: c ? c.label : tag, tagColor: c ? c.color : pomActive.catColor, type: pomBreak ? "break" : "focus", day: pomTodayKey(), ts: Date.now() };
-    pomLog.unshift(session);
-    pomSaveLog();
-    if (!pomBreak) {
-      pomCounts[pomActive.id] = (pomCounts[pomActive.id] || 0) + 1;
-      pomSaveCounts();
-    }
+    var tagSel = document.getElementById("pomTagSel");
+    var tagId = tagSel ? tagSel.value : pomActive.catId;
+    var c = catById(tagId) || catOf(pomActive.catId);
+    var session = { task: pomActive.title, taskId: pomActive.id, tag: c ? c.label : tagId, tagColor: c ? c.color : pomActive.catColor, type: pomBreak ? "break" : "focus", day: todayKey(), ts: Date.now() };
+    pomLog.unshift(session); pomSaveLog();
+    if (!pomBreak) { pomCounts[pomActive.id] = (pomCounts[pomActive.id] || 0) + 1; pomSaveCounts(); }
     pomBreak = !pomBreak;
     pomSecondsLeft = pomBreak ? POM_BREAK : POM_WORK;
     pomUpdateRing(); pomUpdateBtn(); pomUpdateCount();
     pomRenderLog(); pomRenderStats();
-    render(); /* refresh nav count */
-    toast(pomBreak ? "Session done — take a break!" : "Break over — back to it!");
+    render();
+    toast(pomBreak ? "Session done \u2014 take a break!" : "Break over \u2014 back to it!");
   }
 
   function pomCancel() {
@@ -2152,7 +2144,7 @@
 
   function pomRenderLog() {
     var box = document.getElementById("pomLogList"); if (!box) return;
-    var today = pomLog.filter(function (s) { return s.day === pomTodayKey(); });
+    var today = pomLog.filter(function (s) { return s.day === todayKey(); });
     if (!today.length) { box.innerHTML = '<div class="pom-empty">No sessions yet today</div>'; return; }
     box.innerHTML = "";
     today.forEach(function (s) {
@@ -2162,15 +2154,13 @@
       var tag = document.createElement("span"); tag.className = "pom-log-tag"; tag.textContent = s.tag; row.appendChild(tag);
       var d = new Date(s.ts);
       var time = document.createElement("span"); time.className = "pom-log-time";
-      time.textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + " · " + s.type;
-      row.appendChild(time);
-      box.appendChild(row);
+      time.textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + " \u00b7 " + s.type;
+      row.appendChild(time); box.appendChild(row);
     });
   }
 
   function pomRenderStats() {
-    var tk = pomTodayKey();
-    var now = new Date(); var weekAgo = now - 7 * 86400000;
+    var tk = todayKey(); var weekAgo = Date.now() - 7 * 86400000;
     var todayFocus = pomLog.filter(function (s) { return s.type === "focus" && s.day === tk; });
     var weekFocus = pomLog.filter(function (s) { return s.type === "focus" && s.ts >= weekAgo; });
     var st = document.getElementById("pomStatToday"); if (st) st.textContent = todayFocus.length;
@@ -2193,7 +2183,6 @@
     } catch (e) {}
   }
 
-  /* expose toggle/cancel to inline onclick handlers */
   window.pomToggle = pomToggle;
   window.pomCancel = pomCancel;
 
