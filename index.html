@@ -354,7 +354,55 @@
     .field-grid { grid-template-columns: 1fr; }
     .mic { display: none !important; }
   }
-  @media print {
+  /* ---------- Pomodoro / Focus view ---------- */
+  .pom-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 860px) { .pom-layout { grid-template-columns: 1fr; } }
+  .pom-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 20px 22px; }
+  .pom-card h3 { font-family: "Bricolage Grotesque", sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 14px; color: var(--ink); }
+  .pom-task-list { display: flex; flex-direction: column; gap: 7px; }
+  .pom-task { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); cursor: pointer; transition: border-color .15s, background .15s; }
+  .pom-task:hover { border-color: var(--accent); }
+  .pom-task.pom-active { border-color: var(--accent); background: var(--accent-soft); }
+  .pom-task-name { flex: 1; font-size: 14px; color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pom-task-cat { font-size: 11px; font-weight: 600; color: #fff; padding: 2px 7px; border-radius: 20px; flex: none; }
+  .pom-task-count { font-size: 12px; color: var(--ink-faint); flex: none; }
+  .pom-focus-btn { border: 1px solid var(--line-strong); background: var(--paper); color: var(--accent); border-radius: 9px; padding: 6px 12px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; flex: none; transition: .15s; white-space: nowrap; }
+  .pom-focus-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .pom-focus-btn.pom-btn-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pom-timer-wrap { text-align: center; }
+  .pom-idle { color: var(--ink-faint); font-size: 14px; padding: 30px 0; }
+  .pom-task-lbl { font-size: 13px; color: var(--ink-soft); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pom-tag-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 18px; }
+  .pom-tag-badge { font-size: 12px; font-weight: 600; color: #fff; padding: 3px 10px; border-radius: 20px; }
+  .pom-tag-sel { font-size: 12px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 4px 8px; background: var(--paper); color: var(--ink); }
+  .pom-ring-wrap { position: relative; width: 140px; height: 140px; margin: 0 auto 10px; }
+  .pom-ring-wrap svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+  .pom-ring-bg { fill: none; stroke: var(--line-strong); stroke-width: 7; }
+  .pom-ring-fg { fill: none; stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .pom-ring-time { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: "Bricolage Grotesque", sans-serif; font-size: 30px; font-weight: 600; color: var(--ink); letter-spacing: -1px; }
+  .pom-ring-mode { margin-top: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-faint); }
+  .pom-controls { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+  .pom-btn { border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); border-radius: 10px; padding: 9px 18px; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: .15s; }
+  .pom-btn:hover { border-color: var(--ink-soft); }
+  .pom-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pom-btn.primary:hover { background: #0b7d73; }
+  .pom-btn.danger { color: #ef4444; border-color: #ef4444; }
+  .pom-btn.danger:hover { background: rgba(239,68,68,.07); }
+  .pom-count-lbl { font-size: 12px; color: var(--ink-faint); margin-top: 10px; }
+  .pom-log-list { display: flex; flex-direction: column; gap: 6px; }
+  .pom-log-row { display: flex; align-items: center; gap: 9px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
+  .pom-log-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .pom-log-dot.focus { background: var(--accent); }
+  .pom-log-dot.brk { background: var(--ok); }
+  .pom-log-task { flex: 1; font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pom-log-tag { font-size: 11px; color: var(--ink-faint); flex: none; }
+  .pom-log-time { font-size: 11px; color: var(--ink-faint); flex: none; }
+  .pom-empty { color: var(--ink-faint); font-size: 13.5px; padding: 8px 0; }
+  .pom-stats-row { display: flex; gap: 16px; margin-bottom: 14px; }
+  .pom-stat { flex: 1; text-align: center; padding: 10px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+  .pom-stat b { display: block; font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); }
+  .pom-stat span { font-size: 11px; color: var(--ink-faint); }
+
     .side, .quick, .toolbar, .menu-toggle, .entry-actions, .check, .note-card textarea { display: none !important; }
     .app { grid-template-columns: 1fr; }
     body { background: #fff; }
@@ -409,6 +457,7 @@
     <button class="nav-btn" data-view="done"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Completed <span class="count" id="c-done"></span></button>
     <button class="nav-btn" data-view="vault"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Vault <span class="count" id="c-vault"></span></button>
     <button class="nav-btn" data-view="notes"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Notes <span class="count" id="c-notes"></span></button>
+    <button class="nav-btn" data-view="focus"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Focus <span class="count" id="c-focus"></span></button>
 
     <button class="nav-label cat-toggle" id="catToggle" type="button">Categories <svg class="cat-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
     <div id="catNav"></div>
@@ -584,6 +633,53 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Focus / Pomodoro view panel -->
+<div id="pomView" style="display:none">
+  <div class="pom-layout">
+    <div class="pom-card">
+      <h3>Your tasks</h3>
+      <div class="pom-task-list" id="pomTaskList"></div>
+    </div>
+    <div>
+      <div class="pom-card" style="margin-bottom:16px">
+        <h3>Timer</h3>
+        <div class="pom-timer-wrap">
+          <div class="pom-idle" id="pomIdle">Pick a task from the list to start a session</div>
+          <div id="pomActive" style="display:none">
+            <div class="pom-task-lbl" id="pomTaskLbl"></div>
+            <div class="pom-tag-row">
+              <span class="pom-tag-badge" id="pomTagBadge"></span>
+              <select class="pom-tag-sel" id="pomTagSel"></select>
+            </div>
+            <div class="pom-ring-wrap">
+              <svg width="140" height="140" viewBox="0 0 140 140">
+                <circle class="pom-ring-bg" cx="70" cy="70" r="60"/>
+                <circle class="pom-ring-fg" id="pomRingFg" cx="70" cy="70" r="60" stroke="#0d9488" stroke-dasharray="376.99" stroke-dashoffset="0"/>
+              </svg>
+              <div class="pom-ring-time" id="pomRingTime">25:00</div>
+            </div>
+            <div class="pom-ring-mode" id="pomRingMode">Focus</div>
+            <div class="pom-controls">
+              <button class="pom-btn primary" id="pomPlayBtn" type="button" onclick="pomToggle()">Start</button>
+              <button class="pom-btn danger" type="button" onclick="pomCancel()">Cancel</button>
+            </div>
+            <div class="pom-count-lbl" id="pomCountLbl"></div>
+          </div>
+        </div>
+      </div>
+      <div class="pom-card">
+        <div class="pom-stats-row">
+          <div class="pom-stat"><b id="pomStatToday">0</b><span>Today</span></div>
+          <div class="pom-stat"><b id="pomStatWeek">0</b><span>This week</span></div>
+          <div class="pom-stat"><b id="pomStatMins">0</b><span>Minutes</span></div>
+        </div>
+        <h3>Session log</h3>
+        <div id="pomLogList" class="pom-log-list"><div class="pom-empty">No sessions yet today</div></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -1267,6 +1363,8 @@
     document.getElementById("c-done").textContent = "";
     document.getElementById("c-vault").textContent = state.vault.filter(function (v) { return v.kind !== "note"; }).length || "";
     document.getElementById("c-notes").textContent = state.vault.filter(function (v) { return v.kind === "note"; }).length || "";
+    var pomDone = pomLog.filter(function (s) { return s.type === "focus" && s.day === pomTodayKey(); }).length;
+    document.getElementById("c-focus").textContent = pomDone || "";
     var tk = todayKey();
     document.getElementById("c-today").textContent = state.entries.filter(function (e) { return !e.done && e.due && e.due <= tk; }).length || "";
     var nav = document.getElementById("catNav"); nav.innerHTML = "";
@@ -1281,20 +1379,25 @@
     });
   }
   function renderHead() {
-    var titles = { todo: ["To-Do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All live", "Every open entry across all categories"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"], vault: ["Vault", "Keys, logins and snippets you need to keep handy"], notes: ["Notes", "Your saved notes, named and kept"] };
+    var titles = { todo: ["To-Do", "Your open jobs, ranked by what matters most"], today: ["Today", "Anything due today or running late"], all: ["All live", "Every open entry across all categories"], calls: ["Call log", "Action points captured from your calls"], done: ["Completed", "Nice work. Here's what you've cleared"], vault: ["Vault", "Keys, logins and snippets you need to keep handy"], notes: ["Notes", "Your saved notes, named and kept"], focus: ["Focus", "Task-linked Pomodoro timer — track your sessions"] };
     var t; if (view.indexOf("cat:") === 0) { var c = catOf(view.slice(4)); t = [c.label, "Everything filed under " + c.label]; } else t = titles[view] || ["", ""];
     document.getElementById("viewTitle").textContent = t[0];
     document.getElementById("viewSub").textContent = t[1];
     document.getElementById("noteCard").style.display = (view === "today" || view === "todo") ? "" : "none";
     document.getElementById("periodSel").style.display = (view === "done") ? "" : "none";
     var isVault = view === "vault" || view === "notes";
-    document.querySelector(".quick").style.display = isVault ? "none" : "";
-    document.getElementById("sortSel").style.display = isVault ? "none" : "";
+    var isFocus = view === "focus";
+    document.querySelector(".quick").style.display = (isVault || isFocus) ? "none" : "";
+    document.getElementById("sortSel").style.display = (isVault || isFocus) ? "none" : "";
+    document.getElementById("pomView").style.display = isFocus ? "" : "none";
+    document.getElementById("list").style.display = isFocus ? "none" : "";
+    document.querySelector(".toolbar").style.display = isFocus ? "none" : "";
   }
   function renderList() {
     var list = document.getElementById("list"); list.innerHTML = "";
     if (view === "vault") { renderVault(list); return; }
     if (view === "notes") { renderNotes(list); return; }
+    if (view === "focus") { pomRenderTasks(); return; }
     if (view === "today") list.appendChild(briefingNode());
     var q = search.trim().toLowerCase();
     var matched = q ? renderSearchMatches(list, q) : false;
@@ -1925,6 +2028,175 @@
     persist(); render(); toast("Pulled overdue jobs to today");
   }
 
+  /* =================================================================
+     POMODORO ENGINE
+     ================================================================= */
+  var POM_WORK = 25 * 60, POM_BREAK = 5 * 60;
+  var POM_CIRC = 2 * Math.PI * 60; /* r=60 */
+  var pomLog = (function () { try { var r = localStorage.getItem("boff.pom.log"); return r ? JSON.parse(r) : []; } catch (e) { return []; } })();
+  var pomCounts = (function () { try { var r = localStorage.getItem("boff.pom.counts"); return r ? JSON.parse(r) : {}; } catch (e) { return {}; } })();
+  var pomActive = null; /* { id, title, cat, catColor, tag } */
+  var pomSecondsLeft = POM_WORK, pomRunning = false, pomBreak = false, pomTimer = null;
+
+  function pomTodayKey() { return todayKey(); }
+  function pomSaveLog() { try { localStorage.setItem("boff.pom.log", JSON.stringify(pomLog.slice(0, 200))); } catch (e) {} }
+  function pomSaveCounts() { try { localStorage.setItem("boff.pom.counts", JSON.stringify(pomCounts)); } catch (e) {} }
+
+  function pomRenderTasks() {
+    var box = document.getElementById("pomTaskList"); if (!box) return;
+    var open = state.entries.filter(function (e) { return !e.done; });
+    if (!open.length) { box.innerHTML = '<p class="pom-empty">No open tasks — add some from the To-Do view first.</p>'; return; }
+    box.innerHTML = "";
+    open.slice(0, 20).forEach(function (e) {
+      var row = document.createElement("div");
+      row.className = "pom-task" + (pomActive && pomActive.id === e.id ? " pom-active" : "");
+      var name = document.createElement("span"); name.className = "pom-task-name"; name.textContent = e.title; row.appendChild(name);
+      var c = catOf(e.category);
+      var badge = document.createElement("span"); badge.className = "pom-task-cat"; badge.style.background = c.color; badge.textContent = c.label; row.appendChild(badge);
+      var cnt = pomCounts[e.id] || 0;
+      if (cnt) { var cc = document.createElement("span"); cc.className = "pom-task-count"; cc.textContent = cnt + " 🍅"; row.appendChild(cc); }
+      var btn = document.createElement("button"); btn.className = "pom-focus-btn" + (pomActive && pomActive.id === e.id ? " pom-btn-active" : "");
+      btn.type = "button";
+      btn.textContent = (pomActive && pomActive.id === e.id) ? "Active" : "Focus";
+      btn.addEventListener("click", function () { pomSelectTask(e); });
+      row.appendChild(btn);
+      box.appendChild(row);
+    });
+  }
+
+  function pomSelectTask(e) {
+    if (pomRunning) return;
+    var c = catOf(e.category);
+    pomActive = { id: e.id, title: e.title, cat: c.label, catColor: c.color, tag: c.id };
+    pomBreak = false; pomSecondsLeft = POM_WORK;
+    pomShowActive();
+    pomRenderTasks();
+  }
+
+  function pomShowActive() {
+    if (!pomActive) return;
+    document.getElementById("pomIdle").style.display = "none";
+    document.getElementById("pomActive").style.display = "";
+    document.getElementById("pomTaskLbl").textContent = pomActive.title;
+    var badge = document.getElementById("pomTagBadge");
+    badge.textContent = pomActive.cat; badge.style.background = pomActive.catColor;
+    var sel = document.getElementById("pomTagSel"); sel.innerHTML = "";
+    categories.forEach(function (c) { var o = document.createElement("option"); o.value = c.id; o.textContent = c.label; if (c.id === pomActive.tag) o.selected = true; sel.appendChild(o); });
+    pomUpdateRing(); pomUpdateBtn(); pomUpdateCount();
+  }
+
+  function pomUpdateRing() {
+    var total = pomBreak ? POM_BREAK : POM_WORK;
+    var frac = pomSecondsLeft / total;
+    var offset = POM_CIRC * (1 - frac);
+    var fg = document.getElementById("pomRingFg");
+    if (fg) { fg.style.strokeDashoffset = offset; fg.style.stroke = pomBreak ? "#22a06b" : "#0d9488"; }
+    var m = Math.floor(pomSecondsLeft / 60), s = pomSecondsLeft % 60;
+    var rt = document.getElementById("pomRingTime"); if (rt) rt.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    var rm = document.getElementById("pomRingMode"); if (rm) rm.textContent = pomBreak ? "Break" : "Focus";
+  }
+
+  function pomUpdateBtn() {
+    var btn = document.getElementById("pomPlayBtn"); if (!btn) return;
+    if (pomRunning) btn.textContent = "Pause";
+    else btn.textContent = (pomSecondsLeft < (pomBreak ? POM_BREAK : POM_WORK)) ? "Resume" : "Start";
+  }
+
+  function pomUpdateCount() {
+    var lbl = document.getElementById("pomCountLbl"); if (!lbl || !pomActive) return;
+    var n = pomCounts[pomActive.id] || 0;
+    lbl.textContent = n ? n + " session" + (n > 1 ? "s" : "") + " on this task today" : "";
+  }
+
+  function pomToggle() {
+    if (!pomActive) return;
+    if (pomRunning) { clearInterval(pomTimer); pomRunning = false; }
+    else { pomRunning = true; pomTimer = setInterval(pomTick, 1000); }
+    pomUpdateBtn();
+  }
+
+  function pomTick() {
+    pomSecondsLeft--;
+    pomUpdateRing();
+    if (pomSecondsLeft <= 0) {
+      clearInterval(pomTimer); pomRunning = false;
+      pomSessionEnd();
+    }
+  }
+
+  function pomSessionEnd() {
+    pomChime();
+    var tag = (document.getElementById("pomTagSel") || {}).value || pomActive.tag;
+    var c = catById(tag) || catOf(pomActive.tag);
+    var session = { task: pomActive.title, taskId: pomActive.id, tag: c ? c.label : tag, tagColor: c ? c.color : pomActive.catColor, type: pomBreak ? "break" : "focus", day: pomTodayKey(), ts: Date.now() };
+    pomLog.unshift(session);
+    pomSaveLog();
+    if (!pomBreak) {
+      pomCounts[pomActive.id] = (pomCounts[pomActive.id] || 0) + 1;
+      pomSaveCounts();
+    }
+    pomBreak = !pomBreak;
+    pomSecondsLeft = pomBreak ? POM_BREAK : POM_WORK;
+    pomUpdateRing(); pomUpdateBtn(); pomUpdateCount();
+    pomRenderLog(); pomRenderStats();
+    render(); /* refresh nav count */
+    toast(pomBreak ? "Session done — take a break!" : "Break over — back to it!");
+  }
+
+  function pomCancel() {
+    clearInterval(pomTimer); pomRunning = false; pomActive = null; pomBreak = false; pomSecondsLeft = POM_WORK;
+    document.getElementById("pomIdle").style.display = "";
+    document.getElementById("pomActive").style.display = "none";
+    pomRenderTasks();
+  }
+
+  function pomRenderLog() {
+    var box = document.getElementById("pomLogList"); if (!box) return;
+    var today = pomLog.filter(function (s) { return s.day === pomTodayKey(); });
+    if (!today.length) { box.innerHTML = '<div class="pom-empty">No sessions yet today</div>'; return; }
+    box.innerHTML = "";
+    today.forEach(function (s) {
+      var row = document.createElement("div"); row.className = "pom-log-row";
+      var dot = document.createElement("div"); dot.className = "pom-log-dot " + (s.type === "focus" ? "focus" : "brk"); row.appendChild(dot);
+      var task = document.createElement("span"); task.className = "pom-log-task"; task.textContent = s.task; row.appendChild(task);
+      var tag = document.createElement("span"); tag.className = "pom-log-tag"; tag.textContent = s.tag; row.appendChild(tag);
+      var d = new Date(s.ts);
+      var time = document.createElement("span"); time.className = "pom-log-time";
+      time.textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + " · " + s.type;
+      row.appendChild(time);
+      box.appendChild(row);
+    });
+  }
+
+  function pomRenderStats() {
+    var tk = pomTodayKey();
+    var now = new Date(); var weekAgo = now - 7 * 86400000;
+    var todayFocus = pomLog.filter(function (s) { return s.type === "focus" && s.day === tk; });
+    var weekFocus = pomLog.filter(function (s) { return s.type === "focus" && s.ts >= weekAgo; });
+    var st = document.getElementById("pomStatToday"); if (st) st.textContent = todayFocus.length;
+    var sw = document.getElementById("pomStatWeek"); if (sw) sw.textContent = weekFocus.length;
+    var sm = document.getElementById("pomStatMins"); if (sm) sm.textContent = todayFocus.length * 25;
+  }
+
+  function pomChime() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [523.25, 659.25, 783.99].forEach(function (freq, i) {
+        var osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = freq; osc.type = "sine";
+        var t = ctx.currentTime + i * 0.18;
+        gain.gain.setValueAtTime(0.22, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+        osc.start(t); osc.stop(t + 0.55);
+      });
+    } catch (e) {}
+  }
+
+  /* expose toggle/cancel to inline onclick handlers */
+  window.pomToggle = pomToggle;
+  window.pomCancel = pomCancel;
+
   /* ---------- init ---------- */
   function start() {
     loadLocal(); loadPending();
@@ -2015,6 +2287,7 @@
     document.getElementById("authPass").addEventListener("keydown", function (ev) { if (ev.key === "Enter") doSignIn(); });
 
     loadDayNote(); render(); notifyDue(false);
+    pomRenderLog(); pomRenderStats();
 
     document.getElementById("rememberMe").checked = curRemember;
     if (sb) { attach(); }
