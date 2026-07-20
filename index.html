@@ -415,6 +415,13 @@
   .pom-custom-row input { width: 56px; border: 1px solid var(--line-strong); background: var(--paper); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 13px; color: var(--ink); text-align: center; }
   .pom-custom-row input:focus { outline: none; border-color: var(--accent); }
   .pom-divider { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
+  /* Alert banner */
+  .pom-alert { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: #0d9488; color: #fff; padding: 14px 24px; text-align: center; font-size: 15px; font-weight: 600; letter-spacing: .01em; box-shadow: 0 4px 24px rgba(0,0,0,.18); animation: pomPulse 1s ease-in-out infinite; }
+  .pom-alert.break-alert { background: #22a06b; }
+  .pom-alert.free-alert { background: #7c6cf0; }
+  .pom-alert-dismiss { margin-left: 18px; border: 2px solid rgba(255,255,255,.7); background: transparent; color: #fff; border-radius: 8px; padding: 5px 14px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .pom-alert-dismiss:hover { background: rgba(255,255,255,.2); }
+  @keyframes pomPulse { 0%,100% { opacity: 1; } 50% { opacity: .82; } }
 
   @media print {
     .side, .quick, .toolbar, .menu-toggle, .entry-actions, .check, .note-card textarea { display: none !important; }
@@ -637,6 +644,12 @@
   </main>
 </div>
 
+<!-- Persistent alert banner — shown until manually dismissed -->
+<div class="pom-alert" id="pomAlertBanner">
+  <span id="pomAlertMsg"></span>
+  <button class="pom-alert-dismiss" type="button" onclick="pomDismissAlert()">Got it</button>
+</div>
+
 <div class="scrim" id="scrim">
   <div class="modal">
     <div class="modal-head"><h3 id="modalTitle">Edit entry</h3></div>
@@ -746,7 +759,7 @@
      Both come from Supabase: Project Settings > API.
      The anon key is meant to be public, your data is protected by login.
      ================================================================= */
-  var BUILD = "Build 2026-07-20c (Focus view + freestanding Pomodoro)";
+  var BUILD = "Build 2026-07-20d (Focus view + repeating alert)";
   var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
   /* ================================================================= */
@@ -2094,10 +2107,32 @@
   var pomSecondsLeft = POM_WORK, pomRunning = false, pomBreak = false, pomTimer = null;
   var freeWorkMins = 25, freeBreakMins = 10;
   var freeSecondsLeft = 25 * 60, freeRunning = false, freeBreak = false, freeTimer = null;
+  var pomAlertInterval = null;
 
   function pomSaveLog() { try { localStorage.setItem("boff.pom.log", JSON.stringify(pomLog.slice(0, 200))); } catch (e) {} }
   function pomSaveCounts() { try { localStorage.setItem("boff.pom.counts", JSON.stringify(pomCounts)); } catch (e) {} }
 
+  /* -- Alert banner -- */
+  function pomShowAlert(msg, cls) {
+    var banner = document.getElementById("pomAlertBanner");
+    var msgEl = document.getElementById("pomAlertMsg");
+    if (!banner || !msgEl) return;
+    msgEl.textContent = msg;
+    banner.className = "pom-alert " + (cls || "");
+    banner.style.display = "block";
+    pomChime();
+    pomAlertInterval = setInterval(function () { pomChime(); }, 5000);
+  }
+
+  function pomDismissAlert() {
+    var banner = document.getElementById("pomAlertBanner");
+    if (banner) banner.style.display = "none";
+    if (pomAlertInterval) { clearInterval(pomAlertInterval); pomAlertInterval = null; }
+  }
+
+  window.pomDismissAlert = pomDismissAlert;
+
+  /* -- Task-linked timer -- */
   function pomRenderTasks() {
     var box = document.getElementById("pomTaskList"); if (!box) return;
     var open = state.entries.filter(function (e) { return !e.done; });
@@ -2174,26 +2209,32 @@
   }
 
   function pomSessionEnd() {
-    pomChime();
     var tagSel = document.getElementById("pomTagSel");
     var tagId = tagSel ? tagSel.value : pomActive.catId;
     var c = catById(tagId) || catOf(pomActive.catId);
     var session = { task: pomActive.title, taskId: pomActive.id, tag: c ? c.label : tagId, type: pomBreak ? "break" : "focus", day: todayKey(), ts: Date.now() };
     pomLog.unshift(session); pomSaveLog();
     if (!pomBreak) { pomCounts[pomActive.id] = (pomCounts[pomActive.id] || 0) + 1; pomSaveCounts(); }
+    var wasBreak = pomBreak;
     pomBreak = !pomBreak; pomSecondsLeft = pomBreak ? POM_BREAK : POM_WORK;
     pomUpdateRing(); pomUpdateBtn(); pomUpdateCount();
     pomRenderLog(); pomRenderStats(); render();
-    toast(pomBreak ? "Session done - take a break!" : "Break over - back to it!");
+    if (wasBreak) {
+      pomShowAlert("Break over - time to focus!", "");
+    } else {
+      pomShowAlert("Session done - take a break! (" + (pomBreak ? POM_BREAK / 60 : POM_WORK / 60) + " min)", "break-alert");
+    }
   }
 
   function pomCancel() {
     clearInterval(pomTimer); pomRunning = false; pomActive = null; pomBreak = false; pomSecondsLeft = POM_WORK;
+    pomDismissAlert();
     document.getElementById("pomIdle").style.display = "";
     document.getElementById("pomActive").style.display = "none";
     pomRenderTasks();
   }
 
+  /* -- Freestanding timer -- */
   function freeSetWork(btn) {
     if (freeRunning) return;
     freeWorkMins = parseInt(btn.dataset.mins, 10);
@@ -2227,21 +2268,26 @@
   }
 
   function freeSessionEnd() {
-    pomChime();
     if (!freeBreak) {
       var lbl = (document.getElementById("freeLabel").value.trim()) || "Freestanding session";
       var session = { task: lbl, taskId: null, tag: "Free", type: "focus", day: todayKey(), ts: Date.now(), workMins: freeWorkMins };
       pomLog.unshift(session); pomSaveLog();
       pomRenderLog(); pomRenderStats(); render();
     }
+    var wasBreak = freeBreak;
     freeBreak = !freeBreak; freeSecondsLeft = freeBreak ? freeBreakMins * 60 : freeWorkMins * 60;
     freeUpdateRing(); freeUpdateBtn();
-    toast(freeBreak ? "Session done - take a break!" : "Break over - back to it!");
+    if (wasBreak) {
+      pomShowAlert("Break over - time to focus!", "free-alert");
+    } else {
+      pomShowAlert("Session done - take a " + freeBreakMins + " min break!", "free-alert");
+    }
   }
 
   function freeReset() {
     clearInterval(freeTimer); freeRunning = false; freeBreak = false;
     freeSecondsLeft = freeWorkMins * 60;
+    pomDismissAlert();
     freeUpdateRing(); freeUpdateBtn();
   }
 
@@ -2260,6 +2306,7 @@
     btn.textContent = freeRunning ? "Pause" : (freeSecondsLeft < freeWorkMins * 60 && !freeBreak ? "Resume" : "Start");
   }
 
+  /* -- Shared log + stats -- */
   function pomRenderLog() {
     var box = document.getElementById("pomLogList"); if (!box) return;
     var today = pomLog.filter(function (s) { return s.day === todayKey(); });
