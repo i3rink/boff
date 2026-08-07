@@ -432,8 +432,8 @@
   }
 
   /* ---- BOARD LAYOUT ---- */
-  .board { display: flex; gap: 14px; align-items: flex-start; overflow-x: auto; padding-bottom: 20px; min-width: 0; }
-  .board-col { flex: 0 0 300px; min-width: 260px; max-width: 340px; background: var(--paper-2); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; }
+  .board { display: flex; gap: 12px; align-items: flex-start; overflow-x: auto; padding-bottom: 20px; min-width: 0; width: 100%; }
+  .board-col { flex: 1 1 220px; min-width: 200px; background: var(--paper-2); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; }
   .board-col-head { padding: 12px 14px 10px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
   .board-col-swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
   .board-col-title { font-family: "Bricolage Grotesque", sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); flex: 1; }
@@ -450,12 +450,16 @@
   .bcard.p-medium::before { background: var(--p-med); }
   .bcard.p-low::before { background: var(--p-low); }
   .bcard.done { opacity: .55; }
-  .bcard-body { padding: 10px 10px 10px 14px; }
-  .bcard-title { font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.4; word-break: break-word; cursor: pointer; }
+  .bcard-detail { display: none; font-size: 12px; color: var(--ink-soft); line-height: 1.45; margin-top: 5px; word-break: break-word; white-space: pre-wrap; }
+  .bcard.open .bcard-detail { display: block; }
+  .bcard.open .bcard-title { white-space: normal; overflow: visible; text-overflow: clip; }
+  .bcard-body { padding: 8px 8px 6px 13px; }
+  .bcard-title { font-size: 13.5px; font-weight: 600; color: var(--ink); line-height: 1.35; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bcard-title.expanded { white-space: normal; overflow: visible; text-overflow: clip; }
   .bcard.done .bcard-title { text-decoration: line-through; text-decoration-color: var(--ink-faint); }
-  .bcard-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 7px; }
-  .bcard-foot { display: flex; align-items: center; gap: 6px; padding: 0 10px 9px 14px; }
-  .bcard-check { width: 20px; height: 20px; border: 2px solid var(--line-strong); border-radius: 6px; cursor: pointer; flex: none; display: grid; place-items: center; transition: .15s; background: var(--paper); }
+  .bcard-meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 5px; }
+  .bcard-foot { display: flex; align-items: center; gap: 4px; padding: 0 6px 6px 13px; }
+  .bcard-check { width: 18px; height: 18px; border: 2px solid var(--line-strong); border-radius: 5px; cursor: pointer; flex: none; display: grid; place-items: center; transition: .15s; background: var(--paper); }
   .bcard-check:hover { border-color: var(--accent); }
   .bcard-check.on { background: var(--accent); border-color: var(--accent); }
   .bcard-check.on svg { stroke: #fff; }
@@ -464,8 +468,10 @@
   .icobtn { border: none; background: transparent; cursor: pointer; padding: 5px; border-radius: 7px; color: var(--ink-faint); transition: .15s; }
   .icobtn:hover { background: rgba(43,39,34,.06); color: var(--ink); }
   .icobtn svg { width: 14px; height: 14px; display: block; }
+  .bcard-expand svg { transition: transform .2s; }
+  .bcard.open .bcard-expand svg { transform: rotate(180deg); }
   /* ---- subtask progress on card ---- */
-  .sub-progress { padding: 0 10px 9px 14px; display: flex; align-items: center; gap: 8px; }
+  .sub-progress { padding: 0 8px 6px 13px; display: flex; align-items: center; gap: 6px; }
   .sub-bar-wrap { flex: 1; height: 4px; background: var(--line-strong); border-radius: 4px; overflow: hidden; }
   .sub-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s; }
   .sub-bar-label { font-size: 11px; color: var(--ink-faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -497,7 +503,7 @@
   /* ---- quick add date picker ---- */
   .quick-opts input[type=date] { border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 13px; cursor: pointer; }
   .quick-opts input[type=date]:focus { outline: none; border-color: var(--ink-soft); }
-  @media (max-width: 900px) { .board-col { flex: 0 0 260px; } }
+  @media (max-width: 900px) { .board { flex-wrap: nowrap; } .board-col { flex: 0 0 240px; min-width: 220px; } }
 
 </style>
 </head>
@@ -1577,7 +1583,7 @@
     var t; if (view.indexOf("cat:") === 0) { var c = catOf(view.slice(4)); t = [c.label, "Everything filed under " + c.label]; } else t = titles[view] || ["", ""];
     document.getElementById("viewTitle").textContent = t[0];
     document.getElementById("viewSub").textContent = t[1];
-    document.getElementById("noteCard").style.display = (view === "today" || view === "todo") ? "" : "none";
+    document.getElementById("noteCard").style.display = (view === "today") ? "" : "none";
     var isBoard = isBoardView();
     var isFocus = view === "focus";
     var grpRow = document.getElementById("groupBtnRow");
@@ -1654,7 +1660,7 @@
     var body = el("div", "bcard-body");
     var titleEl = el("div", "bcard-title");
     if (q) titleEl.innerHTML = highlightText(e.title, q); else titleEl.textContent = e.title;
-    titleEl.addEventListener("click", function () { openModal(e.id); });
+    titleEl.addEventListener("click", function () { wrap.classList.toggle("open"); });
     body.appendChild(titleEl);
     var meta = el("div", "bcard-meta");
     var c = catOf(e.category);
@@ -1667,6 +1673,11 @@
     (e.tags || []).forEach(function (tg) { var tc = el("span", "tag-chip", tg); tc.addEventListener("click", function (ev) { ev.stopPropagation(); setTagFilter(tg); }); meta.appendChild(tc); });
     if (e.attachments && e.attachments.length) { var ac = el("span", "att-count"); ac.innerHTML = CLIP_SVG; ac.appendChild(document.createTextNode(" " + e.attachments.length)); meta.appendChild(ac); }
     body.appendChild(meta);
+    /* expandable detail */
+    if (e.details && e.details.trim()) {
+      var det = el("div", "bcard-detail"); det.textContent = e.details.trim().slice(0, 300) + (e.details.trim().length > 300 ? "..." : "");
+      body.appendChild(det);
+    }
     wrap.appendChild(body);
     var total = subtasksTotal(e);
     if (total > 0) {
@@ -1707,6 +1718,12 @@
       if (e.subtasks && e.subtasks.length) { txt += "\n\nSubtasks:\n"; e.subtasks.forEach(function (s) { txt += (s.done ? "[x] " : "[ ] ") + s.text + "\n"; }); }
       copyText(txt, copyBtn);
     }); actions.appendChild(copyBtn);
+    if (e.details && e.details.trim()) {
+      var expandBtn = el("button", "icobtn bcard-expand"); expandBtn.title = "Expand";
+      expandBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>';
+      expandBtn.addEventListener("click", function (ev) { ev.stopPropagation(); wrap.classList.toggle("open"); });
+      actions.appendChild(expandBtn);
+    }
     foot.appendChild(actions);
     wrap.appendChild(foot);
     return wrap;
