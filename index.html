@@ -864,7 +864,7 @@
      Both come from Supabase: Project Settings > API.
      The anon key is meant to be public, your data is protected by login.
      ================================================================= */
-  var BUILD = "Build 2026-08-06a (Board view + subtasks + due date in quick add)";
+  var BUILD = "Build 2026-08-12a (Sync reliability + compact cards + board sort)";
   var SUPABASE_URL = "https://xavbwnuyfvthrlxnaoco.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_oa2IjzQmUVnOECjldqW1xA_eODo5fxx";
   /* ================================================================= */
@@ -989,7 +989,7 @@
       ops.push(function () { return sb.from("entries").delete().eq("user_id", user.id).eq("id", id).then(function (r) { if (r.error) throw r.error; delete pending.deletes[id]; }); });
     });
     Object.keys(pending.entries).forEach(function (id) {
-      ops.push(function () { var e = getEntry(id); if (!e) { delete pending.entries[id]; return Promise.resolve(); } return sb.from("entries").upsert(entryRow(e), { onConflict: "user_id,id" }).then(function (r) { if (r.error) throw r.error; delete pending.entries[id]; }); });
+      ops.push(function () { var e = getEntry(id); if (!e) { delete pending.entries[id]; return Promise.resolve(); } return sb.from("entries").upsert(entryRow(e), { onConflict: "user_id,id" }).then(function (r) { if (r.error) { console.error("BOFF entry upsert error:", r.error, "entry:", e && e.id); throw r.error; } delete pending.entries[id]; }); });
     });
     Object.keys(pending.notes).forEach(function (day) {
       ops.push(function () { return sb.from("notes").upsert({ user_id: user.id, day: day, body: state.notes[day] || "", updated: Date.now() }, { onConflict: "user_id,day" }).then(function (r) { if (r.error) throw r.error; delete pending.notes[day]; }); });
@@ -1035,8 +1035,10 @@
       }
     }).then(function () {
       setSync(pendingCount() ? "warn" : "ok", pendingCount() ? "Some changes waiting" : "All synced");
-    }).catch(function () {
-      setSync("warn", "Offline, will sync later");
+    }).catch(function (err) {
+      var msg = (err && (err.message || err.msg || (err.hint ? err.hint : null) || JSON.stringify(err))) || "Unknown error";
+      setSync("warn", "Sync error: " + String(msg).slice(0, 80));
+      console.error("BOFF sync error:", err);
     }).then(function () { syncing = false; });
   }
 
@@ -2771,8 +2773,12 @@
       clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, 1200); /* debounced cloud sync */
     });
     /* flush note to cloud if user navigates away or switches tab */
-    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") { saveLocal(); if (pendingCount()) syncNow(); } });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") { saveLocal(); if (pendingCount()) syncNow(); }
+      if (document.visibilityState === "visible") { if (sb && user && !syncing) syncNow(); }
+    });
     window.addEventListener("pagehide", function () { saveLocal(); });
+    window.addEventListener("focus", function () { if (sb && user && !syncing) syncNow(); });
     document.getElementById("notePrev").addEventListener("click", function () { shiftNoteDay(-1); });
     document.getElementById("noteNext").addEventListener("click", function () { shiftNoteDay(1); });
     document.getElementById("noteToday").addEventListener("click", goToday);
@@ -2809,6 +2815,8 @@
 
     loadDayNote(); render(); notifyDue(false);
     pomRenderLog(); pomRenderStats(); pomInitFreeInputs(); freeUpdateRing();
+    /* periodic sync every 60s to keep status fresh */
+    setInterval(function () { if (sb && user && !syncing) syncNow(); }, 60000);
 
     document.getElementById("rememberMe").checked = curRemember;
     if (sb) { attach(); }
