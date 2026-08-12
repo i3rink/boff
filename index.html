@@ -450,9 +450,21 @@
   .bcard.p-medium::before { background: var(--p-med); }
   .bcard.p-low::before { background: var(--p-low); }
   .bcard.done { opacity: .55; }
-  .bcard-detail { display: none; font-size: 12px; color: var(--ink-soft); line-height: 1.45; margin-top: 5px; word-break: break-word; white-space: pre-wrap; }
+  .bcard-detail { display: none; margin-top: 8px; border-top: 1px solid var(--line); padding-top: 8px; }
   .bcard.open .bcard-detail { display: block; }
   .bcard.open .bcard-title { white-space: normal; overflow: visible; text-overflow: clip; }
+  .bcard-detail-text { font-size: 12.5px; color: var(--ink-soft); line-height: 1.55; word-break: break-word; }
+  .bcard-detail-text p { margin: 0 0 5px; }
+  .bcard-detail-text p:last-child { margin: 0; }
+  .bcard-detail-text ul, .bcard-detail-text ol { margin: 3px 0 5px 18px; }
+  .bcard-detail-text li { margin: 2px 0; }
+  .bcard-detail-text strong { color: var(--ink); font-weight: 700; }
+  .bcard-detail-text code { background: var(--paper-2); padding: 1px 4px; border-radius: 4px; font-size: 11.5px; }
+  .bcard-detail-text hr { border: none; border-top: 1px solid var(--line); margin: 6px 0; }
+  .bcard-detail-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+  .bcard-detail-subs { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+  .bcard-detail-sub-row { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink); }
+  .bcard-detail-foot { margin-top: 8px; font-size: 11px; color: var(--ink-faint); }
   .bcard-body { padding: 8px 8px 6px 13px; }
   .bcard-title { font-size: 13.5px; font-weight: 600; color: var(--ink); line-height: 1.35; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bcard-title.expanded { white-space: normal; overflow: visible; text-overflow: clip; }
@@ -628,6 +640,10 @@
         <button class="group-btn active" data-group="category">Category</button>
         <button class="group-btn" data-group="priority">Priority</button>
         <button class="group-btn" data-group="due">Due date</button>
+        <span class="group-btn-label" style="margin-left:8px;">Sort:</span>
+        <button class="group-btn active" data-sort="default">Priority</button>
+        <button class="group-btn" data-sort="newest">Newest</button>
+        <button class="group-btn" data-sort="oldest">Oldest</button>
       </div>
       <select id="periodSel" style="display:none"><option value="all">All time</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="thismonth">This month</option><option value="lastmonth">Last month</option><option value="thisyear">This year</option></select>
       <span id="tagFilterWrap"></span>
@@ -883,12 +899,13 @@
   var PRI_LABEL = { high: "High", medium: "Medium", low: "Low" };
 
   var state = { entries: [], notes: {}, vault: [] };
-  var view = "today", search = "", boardGroup = "category", period = "all", tagFilter = null, focus = null, openIds = {}, editingId = null;
+  var view = "today", search = "", boardGroup = "category", boardSort = "default", period = "all", tagFilter = null, focus = null, openIds = {}, editingId = null;
   var vaultGroup = "category";
 
-  var LKEY = "boff.cache.v1"; var BOARDGROUP_KEY = "boff.boardgroup"; var VAULTGROUP_KEY = "boff.vaultgroup", PKEY = "boff.pending.v1", LASTCAT_KEY = "boff.lastcat", VAULTSORT_KEY = "boff.vaultsort";
+  var LKEY = "boff.cache.v1"; var BOARDGROUP_KEY = "boff.boardgroup"; var BOARDSORT_KEY = "boff.boardsort"; var VAULTGROUP_KEY = "boff.vaultgroup", PKEY = "boff.pending.v1", LASTCAT_KEY = "boff.lastcat", VAULTSORT_KEY = "boff.vaultsort";
   var lastCat = (function () { try { return localStorage.getItem(LASTCAT_KEY) || ""; } catch (e) { return ""; } })();
   boardGroup = (function () { try { return localStorage.getItem(BOARDGROUP_KEY) || "category"; } catch (e) { return "category"; } })();
+  boardSort = (function () { try { return localStorage.getItem(BOARDSORT_KEY) || "default"; } catch (e) { return "default"; } })();
   vaultGroup = (function () { try { return localStorage.getItem(VAULTGROUP_KEY) || "category"; } catch (e) { return "category"; } })();
   var vaultSort = (function () { try { return localStorage.getItem(VAULTSORT_KEY) || "alpha"; } catch (e) { return "alpha"; } })();
   var bulkSelected = {}, bulkMode = false, callerFilter = null;
@@ -1054,6 +1071,10 @@
   }
   function sortEntries(arr) {
     if (view === "done" || view === "calls") { arr.sort(function (a, b) { return b.updated - a.updated; }); return arr; }
+    if (isBoardView()) {
+      if (boardSort === "newest") { arr.sort(function (a, b) { return b.created - a.created; }); return arr; }
+      if (boardSort === "oldest") { arr.sort(function (a, b) { return a.created - b.created; }); return arr; }
+    }
     arr.sort(function (a, b) {
       if (!a.done && !b.done && a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       if (PRI_RANK[a.priority] !== PRI_RANK[b.priority]) return PRI_RANK[a.priority] - PRI_RANK[b.priority];
@@ -1588,7 +1609,8 @@
     var isFocus = view === "focus";
     var grpRow = document.getElementById("groupBtnRow");
     if (grpRow) grpRow.style.display = (isBoard && !isFocus) ? "" : "none";
-    document.querySelectorAll(".group-btn").forEach(function (b) { b.classList.toggle("active", b.dataset.group === boardGroup); });
+    document.querySelectorAll(".group-btn[data-group]").forEach(function (b) { b.classList.toggle("active", b.dataset.group === boardGroup); });
+    document.querySelectorAll(".group-btn[data-sort]").forEach(function (b) { b.classList.toggle("active", b.dataset.sort === boardSort); });
     document.getElementById("periodSel").style.display = (view === "done") ? "" : "none";
     var isVault = view === "vault" || view === "notes";
     var isFocus = view === "focus";
@@ -1673,10 +1695,44 @@
     (e.tags || []).forEach(function (tg) { var tc = el("span", "tag-chip", tg); tc.addEventListener("click", function (ev) { ev.stopPropagation(); setTagFilter(tg); }); meta.appendChild(tc); });
     if (e.attachments && e.attachments.length) { var ac = el("span", "att-count"); ac.innerHTML = CLIP_SVG; ac.appendChild(document.createTextNode(" " + e.attachments.length)); meta.appendChild(ac); }
     body.appendChild(meta);
-    /* expandable detail */
+    /* expandable detail panel */
+    var detPanel = el("div", "bcard-detail");
     if (e.details && e.details.trim()) {
-      var det = el("div", "bcard-detail"); det.textContent = e.details.trim().slice(0, 300) + (e.details.trim().length > 300 ? "..." : "");
-      body.appendChild(det);
+      var detText = el("div", "bcard-detail-text");
+      detText.innerHTML = renderMarkdown(e.details);
+      detPanel.appendChild(detText);
+    }
+    /* subtasks in expanded view */
+    if (e.subtasks && e.subtasks.length) {
+      var subList = el("div", "bcard-detail-subs");
+      e.subtasks.forEach(function (s) {
+        var sr = el("div", "bcard-detail-sub-row");
+        var sc = el("div", "subtask-check" + (s.done ? " on" : ""));
+        sc.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+        sc.style.cssText = "width:15px;height:15px;border-radius:4px;flex:none;";
+        sc.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          s.done = !s.done; var ent = getEntry(e.id);
+          if (ent) { ent.subtasks = e.subtasks; ent.updated = Date.now(); dirtyEntry(ent.id); persist(); checkAutoComplete(ent); render(); }
+        });
+        var slbl = el("span", s.done ? "subtask-label done" : "subtask-label", s.text);
+        slbl.style.fontSize = "12.5px";
+        sr.appendChild(sc); sr.appendChild(slbl); subList.appendChild(sr);
+      });
+      detPanel.appendChild(subList);
+    }
+    /* extra meta: due, type, repeat, added date */
+    var detMeta = el("div", "bcard-detail-meta");
+    if (e.due) { var dm = fmtDue(e.due); if (dm) detMeta.appendChild(el("span", "meta-txt" + (dm.over ? " over" : ""), dm.txt)); }
+    if (e.recur) detMeta.appendChild(el("span", "meta-txt", "\u21bb " + e.recur));
+    if (e.caller) detMeta.appendChild(el("span", "caller-tag", "Call: " + e.caller));
+    if (detMeta.children.length) detPanel.appendChild(detMeta);
+    var detFoot = el("div", "bcard-detail-foot");
+    detFoot.textContent = "Added " + fmtDateShort(e.created);
+    detPanel.appendChild(detFoot);
+    /* only show panel if there's something in it */
+    if (e.details || (e.subtasks && e.subtasks.length) || e.due || e.recur || e.caller) {
+      body.appendChild(detPanel);
     }
     wrap.appendChild(body);
     var total = subtasksTotal(e);
@@ -2677,7 +2733,8 @@
     document.getElementById("qTitle").addEventListener("keydown", function (ev) { if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); quickAdd(); } });
     document.getElementById("qTitle").addEventListener("input", function () { autoGrow(this); });
     document.getElementById("searchInput").addEventListener("input", function (ev) { search = ev.target.value; render(); });
-    document.querySelectorAll(".group-btn").forEach(function (b) { b.addEventListener("click", function () { boardGroup = b.dataset.group; try { localStorage.setItem(BOARDGROUP_KEY, boardGroup); } catch (x) {} render(); }); });
+    document.querySelectorAll(".group-btn[data-group]").forEach(function (b) { b.addEventListener("click", function () { boardGroup = b.dataset.group; try { localStorage.setItem(BOARDGROUP_KEY, boardGroup); } catch (x) {} render(); }); });
+    document.querySelectorAll(".group-btn[data-sort]").forEach(function (b) { b.addEventListener("click", function () { boardSort = b.dataset.sort; try { localStorage.setItem(BOARDSORT_KEY, boardSort); } catch (x) {} render(); }); });
     
     document.getElementById("periodSel").addEventListener("change", function (ev) { period = ev.target.value; render(); });
     document.getElementById("mSave").addEventListener("click", saveModal);
@@ -2706,7 +2763,16 @@
     document.getElementById("mTitle").addEventListener("input", function () { autoGrow(this); });
     document.getElementById("scrim").addEventListener("click", function (ev) { if (ev.target.id === "scrim") closeModal(); });
     document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeModal(); });
-    document.getElementById("dayNote").addEventListener("input", function (ev) { var k = noteDay || todayKey(); state.notes[k] = ev.target.value; dirtyNote(k); persist(); });
+    document.getElementById("dayNote").addEventListener("input", function (ev) {
+      var k = noteDay || todayKey();
+      state.notes[k] = ev.target.value;
+      dirtyNote(k);
+      saveLocal(); /* immediate local save on every keystroke */
+      clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, 1200); /* debounced cloud sync */
+    });
+    /* flush note to cloud if user navigates away or switches tab */
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") { saveLocal(); if (pendingCount()) syncNow(); } });
+    window.addEventListener("pagehide", function () { saveLocal(); });
     document.getElementById("notePrev").addEventListener("click", function () { shiftNoteDay(-1); });
     document.getElementById("noteNext").addEventListener("click", function () { shiftNoteDay(1); });
     document.getElementById("noteToday").addEventListener("click", goToday);
