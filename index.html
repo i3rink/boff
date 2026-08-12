@@ -979,7 +979,12 @@
   }
 
   /* ---------- cloud sync ---------- */
-  function entryRow(e) { return { user_id: user.id, id: e.id, title: e.title, details: e.details, category: e.category, priority: e.priority, type: e.type, caller: e.caller, due: e.due || null, done: e.done, tags: (e.tags && e.tags.length) ? e.tags.join(",") : null, attachments: (e.attachments && e.attachments.length) ? JSON.stringify(e.attachments) : null, subtasks: (e.subtasks && e.subtasks.length) ? JSON.stringify(e.subtasks) : null, created: e.created, updated: e.updated }; }
+  function entryRow(e) {
+    var row = { user_id: user.id, id: e.id, title: e.title, details: e.details, category: e.category, priority: e.priority, type: e.type, caller: e.caller || null, due: e.due || null, done: e.done, tags: (e.tags && e.tags.length) ? e.tags.join(",") : null, attachments: (e.attachments && e.attachments.length) ? JSON.stringify(e.attachments) : null, subtasks: (e.subtasks && e.subtasks.length) ? JSON.stringify(e.subtasks) : null, created: e.created, updated: e.updated };
+    try { if (e.recur) row.recur = e.recur; } catch(x) {}
+    try { if (e.pinned) row.pinned = e.pinned; } catch(x) {}
+    return row;
+  }
   function cleanRow(r) { var atts = []; if (r.attachments) { try { atts = JSON.parse(r.attachments) || []; } catch (x) { atts = []; } } var subArr = []; if (r.subtasks) { try { subArr = JSON.parse(r.subtasks) || []; } catch (x) { subArr = []; } } return { id: r.id, title: r.title, details: r.details || "", category: r.category, priority: r.priority, type: r.type, caller: r.caller || "", due: r.due || "", done: !!r.done, recur: r.recur || "", pinned: !!r.pinned, tags: (r.tags ? String(r.tags).split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []), attachments: atts, subtasks: subArr, created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
 
   function flush() {
@@ -1036,8 +1041,9 @@
     }).then(function () {
       setSync(pendingCount() ? "warn" : "ok", pendingCount() ? "Some changes waiting" : "All synced");
     }).catch(function (err) {
-      var msg = (err && (err.message || err.msg || (err.hint ? err.hint : null) || JSON.stringify(err))) || "Unknown error";
-      setSync("warn", "Sync error: " + String(msg).slice(0, 80));
+      var msg = ""; try { msg = err ? (err.message || err.hint || err.details || JSON.stringify(err)) : "Unknown"; } catch(x) { msg = String(err); }
+      setSync("warn", "Sync error: " + String(msg).slice(0, 120));
+      console.error("BOFF full sync error:", JSON.stringify(err));
       console.error("BOFF sync error:", err);
     }).then(function () { syncing = false; });
   }
@@ -1267,7 +1273,7 @@
 
   /* ---------- vault ---------- */
   function vaultRow(v) { return { user_id: user.id, id: v.id, label: v.label, body: v.body, kind: v.kind || "secret", category: v.category || null, tags: (v.tags && v.tags.length) ? v.tags.join(",") : null, attachments: (v.attachments && v.attachments.length) ? JSON.stringify(v.attachments) : null, created: v.created, updated: v.updated }; }
-  function cleanVault(r) { var atts = []; if (r.attachments) { try { atts = JSON.parse(r.attachments) || []; } catch (x) { atts = []; } } return { id: r.id, label: r.label || "", body: r.body || "", kind: r.kind || "secret", category: r.category || "", tags: (r.tags ? String(r.tags).split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []), attachments: atts, subtasks: subArr, created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
+  function cleanVault(r) { var atts = []; if (r.attachments) { try { atts = JSON.parse(r.attachments) || []; } catch (x) { atts = []; } } return { id: r.id, label: r.label || "", body: r.body || "", kind: r.kind || "secret", category: r.category || "", tags: (r.tags ? String(r.tags).split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []), attachments: atts, created: Number(r.created) || Date.now(), updated: Number(r.updated) || Date.now() }; }
   function getVault(id) { for (var i = 0; i < state.vault.length; i++) if (state.vault[i].id === id) return state.vault[i]; return null; }
   function delVault(id) { state.vault = state.vault.filter(function (v) { return v.id !== id; }); dirtyVaultDelete(id); persist(); document.getElementById("vaultScrim").classList.remove("show"); editingVault = null; render(); }
 
